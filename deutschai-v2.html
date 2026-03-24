@@ -1,0 +1,2240 @@
+<!DOCTYPE html>
+<html lang="zh-Hans">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DeutschAI — 下一代 AI 词典</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;1,400&family=IBM+Plex+Mono:wght@400;500&family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+<style>
+/* ══════════════════════════════════════════
+   DESIGN TOKENS — fully themeable
+══════════════════════════════════════════ */
+:root {
+  /* -- base palette (dark warm parchment) */
+  --bg:    #0d0c0a;
+  --bg1:   #141210;
+  --bg2:   #1c1916;
+  --bg3:   #252018;
+  --bg4:   #2e2920;
+  --bg5:   #383028;
+  --line:  #352f27;
+  --line2: #453d33;
+  --muted: #7a6e60;
+  --sub:   #a09080;
+  --body:  #d0c4b4;
+  --head:  #ece4d4;
+  --white: #f8f2e8;
+  /* -- accent palette */
+  --gold:    #d4a853;
+  --gold2:   #f0c870;
+  --gold3:   #fff0b8;
+  --red:     #c85840;
+  --red2:    #e07060;
+  --teal:    #3d8070;
+  --teal2:   #55a88e;
+  --teal3:   #80d0b0;
+  --blue:    #5070b8;
+  --blue2:   #80a0e0;
+  --purple:  #8858a0;
+  --purple2: #b080c8;
+  --green:   #507850;
+  --green2:  #70a870;
+  --orange:  #c07830;
+  --orange2: #e09850;
+  /* -- semantic */
+  --accent: var(--gold);
+  --serif: 'Playfair Display','STSong',Georgia,serif;
+  --mono:  'IBM Plex Mono','Courier New',monospace;
+  --sans:  'Noto Sans SC','PingFang SC',system-ui,sans-serif;
+  --r4:4px; --r8:8px; --r12:12px; --r16:16px;
+}
+
+/* light theme override */
+body.theme-light {
+  --bg:#f5f0e8; --bg1:#ede6d8; --bg2:#e4dace; --bg3:#d8cfc0;
+  --bg4:#cdc3b0; --bg5:#c0b5a0; --line:#c0b090; --line2:#a89870;
+  --muted:#806040; --sub:#604020; --body:#2a1c08; --head:#1a0e00; --white:#0a0400;
+}
+
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+html{font-size:14px;}
+body{
+  font-family:var(--sans);
+  background:var(--bg);
+  color:var(--body);
+  height:100dvh;
+  overflow:hidden;
+  display:grid;
+  grid-template-rows:48px 44px 1fr;
+  grid-template-columns:248px 1fr 296px;
+  grid-template-areas:
+    "topnav topnav topnav"
+    "subnav subnav subnav"
+    "left   main   right";
+}
+::-webkit-scrollbar{width:3px;height:3px;}
+::-webkit-scrollbar-track{background:transparent;}
+::-webkit-scrollbar-thumb{background:var(--line2);border-radius:2px;}
+::-webkit-scrollbar-thumb:hover{background:var(--muted);}
+
+/* ═══════════ TOP NAV ═══════════ */
+.topnav{
+  grid-area:topnav;
+  background:var(--bg1);
+  border-bottom:1px solid var(--line);
+  display:flex;align-items:center;
+  padding:0 16px;gap:10px;z-index:60;
+}
+.brand{
+  font-family:var(--serif);font-size:18px;font-weight:600;
+  color:var(--head);letter-spacing:-0.3px;white-space:nowrap;
+  display:flex;align-items:center;gap:6px;
+}
+.brand em{color:var(--gold);font-style:italic;}
+.brand-dot{width:6px;height:6px;border-radius:50%;background:var(--teal2);animation:pulse 2s infinite;}
+
+.topnav-search{
+  flex:1;max-width:460px;
+  display:flex;align-items:center;gap:8px;
+  background:var(--bg2);border:1px solid var(--line2);
+  border-radius:var(--r8);padding:0 12px;
+  transition:border-color .2s;
+}
+.topnav-search:focus-within{border-color:var(--gold);}
+.topnav-search input{
+  flex:1;background:none;border:none;outline:none;
+  font-family:var(--mono);font-size:13px;color:var(--head);
+  padding:8px 0;
+}
+.topnav-search input::placeholder{color:var(--muted);}
+
+.topnav-right{margin-left:auto;display:flex;align-items:center;gap:6px;}
+.nbadge{
+  display:flex;align-items:center;gap:5px;
+  padding:4px 10px;background:var(--bg3);
+  border:1px solid var(--line2);border-radius:20px;
+  font-size:11px;color:var(--sub);cursor:pointer;
+  transition:all .15s;white-space:nowrap;
+}
+.nbadge:hover,.nbadge.active{border-color:var(--gold);color:var(--gold);}
+.nbadge .dot{width:6px;height:6px;border-radius:50%;}
+.nbadge.online .dot{background:var(--teal2);}
+.nbadge.offline .dot{background:var(--muted);}
+.nbadge .count{
+  background:var(--red);color:#fff;font-size:10px;
+  padding:0 4px;border-radius:8px;min-width:16px;text-align:center;
+}
+.btn{
+  font-family:var(--sans);font-size:12px;font-weight:500;
+  padding:6px 14px;border-radius:var(--r8);
+  cursor:pointer;border:none;transition:all .15s;
+  display:inline-flex;align-items:center;gap:5px;
+}
+.btn-gold{background:var(--gold);color:#1a0e00;}
+.btn-gold:hover{background:var(--gold2);}
+.btn-ghost{background:var(--bg3);border:1px solid var(--line2);color:var(--sub);}
+.btn-ghost:hover{border-color:var(--sub);color:var(--body);}
+.btn-teal{background:#1a3028;border:1px solid var(--teal);color:var(--teal2);}
+.btn-teal:hover{background:#253830;border-color:var(--teal2);}
+.btn-danger{background:#2a1010;border:1px solid var(--red);color:var(--red2);}
+.btn-icon{padding:6px 8px;}
+
+/* ═══════════ SUB NAV (MODULE SWITCHER) ═══════════ */
+.subnav{
+  grid-area:subnav;
+  background:var(--bg1);
+  border-bottom:1px solid var(--line);
+  display:flex;align-items:stretch;
+  padding:0 16px;gap:0;z-index:50;
+  overflow-x:auto;
+}
+.snav-tab{
+  display:flex;align-items:center;gap:6px;
+  padding:0 16px;font-size:12px;font-weight:500;
+  color:var(--muted);cursor:pointer;
+  border-bottom:2px solid transparent;
+  transition:all .15s;white-space:nowrap;
+  background:none;border-top:none;border-left:none;border-right:none;
+  font-family:var(--sans);
+}
+.snav-tab:hover{color:var(--body);}
+.snav-tab.active{color:var(--gold);border-bottom-color:var(--gold);}
+.snav-tab .icon{font-size:13px;}
+.snav-tab .badge{
+  background:var(--red);color:#fff;font-size:9px;
+  padding:1px 5px;border-radius:8px;
+}
+
+/* ═══════════ LEFT PANEL ═══════════ */
+.panel-left{
+  grid-area:left;
+  background:var(--bg1);
+  border-right:1px solid var(--line);
+  display:flex;flex-direction:column;
+  overflow:hidden;
+}
+.ps{padding:12px 14px;border-bottom:1px solid var(--line);}
+.plabel{
+  font-family:var(--mono);font-size:10px;letter-spacing:1.2px;
+  text-transform:uppercase;color:var(--muted);
+  margin-bottom:10px;display:flex;align-items:center;justify-content:space-between;
+}
+.plabel span{color:var(--teal2);font-size:9px;cursor:pointer;}
+
+/* Source toggles */
+.src-group{display:flex;flex-direction:column;gap:2px;}
+.src-group-label{
+  font-size:9px;font-family:var(--mono);color:var(--muted);
+  text-transform:uppercase;letter-spacing:1px;
+  padding:4px 6px 2px;
+}
+.src-item{
+  display:flex;align-items:center;gap:7px;
+  padding:5px 6px;border-radius:var(--r4);
+  cursor:pointer;transition:background .12s;
+}
+.src-item:hover{background:var(--bg3);}
+.src-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;}
+.src-name{font-size:12px;color:var(--body);flex:1;}
+.src-count{font-family:var(--mono);font-size:10px;color:var(--muted);}
+.sw{
+  width:28px;height:15px;background:var(--bg4);
+  border-radius:8px;border:1px solid var(--line2);
+  position:relative;flex-shrink:0;transition:background .2s,border-color .2s;
+  cursor:pointer;
+}
+.sw.on{background:var(--teal);border-color:var(--teal);}
+.sw::after{
+  content:'';position:absolute;
+  width:10px;height:10px;background:var(--muted);
+  border-radius:50%;top:1.5px;left:2px;
+  transition:transform .2s,background .2s;
+}
+.sw.on::after{transform:translateX(12px);background:#fff;}
+.src-badge{
+  font-size:9px;padding:1px 5px;border-radius:3px;
+  font-family:var(--mono);
+}
+.sb-net{background:#1a2030;color:var(--blue2);}
+.sb-local{background:#1a2820;color:var(--teal2);}
+.sb-exam{background:#201a10;color:var(--gold);}
+.sb-ai{background:#200810;color:var(--red2);}
+
+/* word list */
+.word-scroll{flex:1;overflow-y:auto;}
+.witem{
+  display:flex;align-items:center;gap:7px;
+  padding:7px 14px;cursor:pointer;
+  border-left:2px solid transparent;
+  transition:background .1s,border-color .1s;
+}
+.witem:hover{background:var(--bg2);}
+.witem.active{background:var(--bg2);border-left-color:var(--gold);}
+.witem-art{
+  font-family:var(--mono);font-size:10px;
+  padding:2px 4px;border-radius:3px;flex-shrink:0;
+}
+.art-der{background:#162030;color:#6890d0;}
+.art-die{background:#281620;color:#c06080;}
+.art-das{background:#162016;color:#60a060;}
+.art-v{background:#1a1020;color:var(--purple2);}
+.witem-word{font-family:var(--serif);font-size:13px;color:var(--head);flex:1;}
+.witem-zh{font-size:11px;color:var(--muted);}
+.srs-pips{display:flex;gap:2px;}
+.srs-pip{width:4px;height:8px;border-radius:2px;background:var(--bg4);}
+.srs-pip.on{background:var(--teal2);}
+.srs-pip.warn{background:var(--gold);}
+.srs-pip.over{background:var(--red2);}
+.witem-due{font-size:10px;color:var(--red2);}
+
+/* ═══════════ MAIN PANEL ═══════════ */
+.panel-main{
+  grid-area:main;
+  overflow:hidden;
+  display:flex;flex-direction:column;
+}
+/* each module page */
+.mpage{display:none;flex-direction:column;flex:1;overflow:hidden;}
+.mpage.active{display:flex;}
+
+/* ── DICT page ── */
+.dict-scroll{overflow-y:auto;flex:1;padding:24px 32px 60px;}
+.word-hero{margin-bottom:28px;animation:fadeUp .35s both;}
+.word-bigname{
+  font-family:var(--serif);font-size:56px;line-height:1;
+  color:var(--white);letter-spacing:-1px;
+}
+.word-meta-row{display:flex;align-items:center;gap:8px;margin-top:8px;flex-wrap:wrap;}
+.tag{
+  font-family:var(--mono);font-size:10px;
+  padding:2px 7px;border-radius:var(--r4);letter-spacing:0.3px;
+}
+.tag-pos{background:var(--bg3);color:var(--sub);border:1px solid var(--line2);}
+.tag-level{background:#261e08;color:var(--gold);border:1px solid #403010;}
+.tag-exam{background:#161828;color:var(--blue2);border:1px solid #202838;}
+.tag-domain{background:#201028;color:var(--purple2);border:1px solid #301838;}
+.tag-freq{background:#102018;color:var(--teal2);border:1px solid #1a3020;}
+.word-ipa{font-family:var(--mono);font-size:12px;color:var(--muted);margin-top:5px;}
+.word-hero-actions{display:flex;gap:7px;margin-top:12px;flex-wrap:wrap;}
+
+.srs-widget{text-align:right;flex-shrink:0;}
+.srs-title{font-family:var(--mono);font-size:9px;letter-spacing:1px;color:var(--muted);margin-bottom:6px;text-transform:uppercase;}
+.srs-track{display:flex;gap:3px;justify-content:flex-end;}
+.srs-bar{width:18px;height:24px;border-radius:3px;background:var(--bg3);border:1px solid var(--line);transition:background .3s,border-color .3s;}
+.srs-bar.lit{background:var(--teal);border-color:var(--teal2);}
+.srs-bar.lit2{background:var(--gold);border-color:var(--gold2);}
+.srs-next{font-size:10px;color:var(--muted);margin-top:5px;}
+.srs-actions{display:flex;gap:5px;margin-top:8px;justify-content:flex-end;}
+.srs-btn{
+  font-size:11px;padding:4px 10px;border-radius:var(--r4);
+  border:1px solid var(--line2);background:var(--bg3);color:var(--sub);
+  cursor:pointer;font-family:var(--sans);transition:all .15s;
+}
+.srs-btn.wrong:hover{border-color:var(--red);color:var(--red2);}
+.srs-btn.blur:hover{border-color:var(--gold);color:var(--gold);}
+.srs-btn.right:hover{border-color:var(--teal);color:var(--teal2);}
+.srs-btn.easy:hover{border-color:var(--blue);color:var(--blue2);}
+
+.hero-divider{height:1px;background:var(--line);margin-bottom:22px;animation:fadeUp .35s .1s both;}
+.tabs{
+  display:flex;border-bottom:1px solid var(--line);
+  margin-bottom:22px;animation:fadeUp .35s .15s both;
+  overflow-x:auto;
+}
+.tab-btn{
+  padding:8px 16px;font-family:var(--sans);font-size:12px;font-weight:500;
+  color:var(--muted);background:none;border:none;cursor:pointer;
+  border-bottom:2px solid transparent;margin-bottom:-1px;
+  transition:color .15s;white-space:nowrap;
+}
+.tab-btn:hover{color:var(--body);}
+.tab-btn.active{color:var(--gold);border-bottom-color:var(--gold);}
+.tab-pane{display:none;}
+.tab-pane.active{display:block;animation:fadeUp .3s both;}
+
+/* Cards */
+.card{
+  background:var(--bg1);border:1px solid var(--line);
+  border-radius:var(--r12);margin-bottom:14px;overflow:hidden;
+}
+.card-head{
+  display:flex;align-items:center;gap:8px;
+  padding:11px 18px;border-bottom:1px solid var(--line);
+  background:var(--bg2);
+}
+.card-head-label{font-size:12px;font-weight:500;color:var(--sub);flex:1;}
+.card-badge{font-family:var(--mono);font-size:10px;padding:2px 6px;border-radius:var(--r4);}
+.badge-ai{background:#201408;color:var(--gold);border:1px solid #3a2010;}
+.badge-src{background:var(--bg3);color:var(--muted);border:1px solid var(--line);}
+.badge-net{background:#101820;color:var(--blue2);border:1px solid #1a2838;}
+.badge-exam{background:#181408;color:var(--orange2);border:1px solid #302010;}
+.card-body{padding:18px;}
+
+.meaning-row{
+  display:grid;grid-template-columns:24px 1fr;
+  gap:10px;padding:12px 0;
+  border-bottom:1px solid var(--line);
+}
+.meaning-row:last-child{border-bottom:none;padding-bottom:0;}
+.meaning-idx{font-family:var(--serif);font-size:20px;font-style:italic;color:var(--gold);line-height:1.2;padding-top:2px;}
+.meaning-zh{font-size:16px;font-weight:500;color:var(--head);margin-bottom:4px;}
+.meaning-register{
+  font-family:var(--mono);font-size:9px;
+  padding:1px 5px;border-radius:3px;
+  background:var(--bg3);color:var(--muted);
+  border:1px solid var(--line);margin-left:6px;vertical-align:middle;
+}
+.ex-block{
+  margin-top:8px;padding:10px 14px;
+  background:var(--bg2);border-radius:var(--r8);
+  border-left:2px solid var(--line2);
+}
+.ex-de{font-family:var(--serif);font-size:14px;font-style:italic;color:var(--body);line-height:1.5;margin-bottom:3px;}
+.ex-zh{font-size:12px;color:var(--muted);line-height:1.5;}
+.ex-src{font-family:var(--mono);font-size:9px;color:var(--muted);opacity:.5;margin-top:4px;}
+.etym-block{padding:14px 18px;background:var(--bg2);border-top:1px solid var(--line);}
+.etym-label{font-family:var(--mono);font-size:9px;letter-spacing:1px;text-transform:uppercase;color:var(--muted);margin-bottom:6px;}
+.etym-text{font-size:13px;line-height:1.7;color:var(--body);}
+.etym-hl{color:var(--gold2);font-weight:500;}
+.mnem-block{padding:14px 18px;background:#120e06;border-top:1px solid var(--line);border-radius:0 0 var(--r12) var(--r12);}
+.mnem-label{font-family:var(--mono);font-size:9px;letter-spacing:1px;text-transform:uppercase;color:var(--gold);opacity:.6;margin-bottom:5px;}
+.mnem-text{font-size:13px;line-height:1.7;color:var(--body);font-style:italic;}
+.mnem-type{
+  display:inline-flex;align-items:center;gap:4px;
+  font-family:var(--mono);font-size:9px;
+  padding:2px 7px;border-radius:20px;
+  border:1px solid var(--line2);color:var(--muted);
+  cursor:pointer;margin-right:5px;margin-top:6px;
+  transition:all .15s;
+}
+.mnem-type:hover,.mnem-type.on{border-color:var(--gold);color:var(--gold);background:var(--bg3);}
+
+/* exam block */
+.exam-block{
+  margin-top:12px;padding:12px 14px;
+  background:#1a1408;border-radius:var(--r8);
+  border:1px solid #362808;
+}
+.exam-block-label{font-size:10px;color:var(--gold);font-family:var(--mono);letter-spacing:1px;text-transform:uppercase;margin-bottom:8px;display:flex;align-items:center;gap:6px;}
+.exam-q{font-size:13px;color:var(--head);line-height:1.6;}
+.exam-a{font-size:12px;color:var(--muted);margin-top:4px;}
+
+/* decl table */
+.decl-table{width:100%;border-collapse:collapse;font-size:12px;}
+.decl-table th{
+  font-family:var(--mono);font-size:9px;letter-spacing:1px;
+  text-transform:uppercase;color:var(--muted);
+  padding:8px 14px;text-align:left;
+  background:var(--bg2);border-bottom:1px solid var(--line);
+}
+.decl-table td{
+  padding:8px 14px;border-bottom:1px solid var(--line);
+  font-family:var(--serif);font-size:13px;color:var(--body);
+}
+.decl-table tr:last-child td{border-bottom:none;}
+.decl-table tr:hover td{background:var(--bg2);}
+.decl-case{font-family:var(--mono);font-size:10px;color:var(--muted);}
+.decl-hl{color:var(--gold2);}
+
+/* src raw */
+.src-card{border:1px solid var(--line);border-radius:var(--r12);margin-bottom:12px;overflow:hidden;}
+.src-card-head{
+  display:flex;align-items:center;gap:8px;padding:10px 14px;
+  background:var(--bg2);border-bottom:1px solid var(--line);cursor:pointer;
+}
+.src-card-name{font-size:12px;font-weight:500;color:var(--body);flex:1;}
+.src-card-toggle{font-family:var(--mono);font-size:12px;color:var(--muted);}
+.src-card-body{
+  background:var(--bg1);padding:14px;
+  font-family:var(--mono);font-size:11px;line-height:1.7;
+  color:var(--muted);max-height:200px;overflow-y:auto;display:none;
+}
+.src-card-body.open{display:block;}
+.src-card-body .k{color:var(--red2);} .src-card-body .v{color:var(--teal2);}
+.src-card-body .n{color:var(--blue2);} .src-card-body .c{color:var(--muted);opacity:.6;}
+
+/* related */
+.related-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+.rel-card{
+  padding:12px 14px;background:var(--bg1);border:1px solid var(--line);
+  border-radius:var(--r12);cursor:pointer;transition:all .15s;
+}
+.rel-card:hover{border-color:var(--gold);background:var(--bg2);}
+.rel-de{font-family:var(--serif);font-size:15px;color:var(--head);}
+.rel-art{font-family:var(--mono);font-size:9px;color:var(--muted);}
+.rel-zh{font-size:12px;color:var(--muted);margin-top:3px;}
+.corpus-ex{
+  padding:12px 14px;background:var(--bg1);border:1px solid var(--line);
+  border-radius:var(--r12);margin-bottom:7px;border-left:2px solid var(--line2);
+  transition:border-color .15s;
+}
+.corpus-ex:hover{border-left-color:var(--gold);}
+.corpus-de{font-family:var(--serif);font-size:13px;font-style:italic;color:var(--body);margin-bottom:3px;}
+.corpus-zh{font-size:11px;color:var(--muted);}
+.corpus-src{font-family:var(--mono);font-size:9px;color:var(--muted);opacity:.5;margin-top:4px;}
+
+/* compounds */
+.compounds-grid{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;}
+.compound-chip{
+  font-family:var(--serif);font-size:12px;padding:5px 12px;
+  background:var(--bg2);border:1px solid var(--line2);
+  border-radius:20px;color:var(--body);cursor:pointer;transition:all .15s;
+}
+.compound-chip:hover{background:var(--bg3);border-color:var(--gold);color:var(--gold);}
+
+/* ── CLASSROOM page ── */
+.classroom-layout{
+  display:grid;grid-template-columns:1fr 360px;
+  flex:1;overflow:hidden;
+}
+.cls-main{overflow-y:auto;padding:20px 24px;}
+.cls-side{
+  background:var(--bg1);border-left:1px solid var(--line);
+  overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:12px;
+}
+
+/* voice recorder */
+.voice-card{
+  background:var(--bg2);border:1px solid var(--line2);
+  border-radius:var(--r12);overflow:hidden;
+}
+.voice-header{
+  display:flex;align-items:center;gap:10px;
+  padding:12px 16px;border-bottom:1px solid var(--line);background:var(--bg3);
+}
+.voice-status-dot{width:8px;height:8px;border-radius:50%;background:var(--muted);}
+.voice-status-dot.rec{background:var(--red2);animation:pulse 1s infinite;}
+.voice-status-dot.pause{background:var(--gold);}
+.voice-status-label{font-size:12px;color:var(--sub);flex:1;}
+.voice-mode-pills{display:flex;gap:4px;}
+.voice-mode-pill{
+  font-size:10px;padding:3px 8px;border-radius:20px;
+  border:1px solid var(--line2);color:var(--muted);cursor:pointer;
+  transition:all .15s;
+}
+.voice-mode-pill.active{background:var(--teal);border-color:var(--teal2);color:var(--white);}
+.voice-body{padding:14px 16px;}
+.waveform-container{
+  height:44px;display:flex;align-items:center;gap:2px;
+  margin-bottom:12px;padding:0 4px;
+  background:var(--bg1);border-radius:var(--r8);
+  border:1px solid var(--line);
+}
+.wave-bar{width:3px;border-radius:2px;background:var(--teal2);opacity:0.5;transition:height .1s;}
+.transcript-result{
+  background:var(--bg1);border-radius:var(--r8);padding:10px 14px;
+  margin-bottom:10px;min-height:56px;
+}
+.tr-de{font-size:13px;color:var(--head);line-height:1.5;margin-bottom:3px;}
+.tr-zh{font-size:12px;color:var(--muted);}
+.tr-placeholder{font-size:12px;color:var(--muted);font-style:italic;}
+.voice-controls{display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+.sensitivity-row{display:flex;align-items:center;gap:8px;margin-top:8px;}
+.sensitivity-row label{font-size:11px;color:var(--muted);white-space:nowrap;}
+.sens-slider{flex:1;accent-color:var(--teal2);height:3px;}
+.sens-val{font-family:var(--mono);font-size:11px;color:var(--teal2);min-width:18px;}
+.voice-linked-word{
+  display:flex;align-items:center;gap:6px;
+  padding:6px 10px;margin-top:8px;
+  background:var(--bg3);border-radius:var(--r4);
+  font-size:11px;color:var(--muted);
+}
+.voice-linked-word strong{color:var(--teal2);font-family:var(--serif);}
+
+/* pdf context */
+.pdf-drop{
+  border:1px dashed var(--line2);border-radius:var(--r8);
+  padding:16px;text-align:center;cursor:pointer;
+  color:var(--muted);font-size:12px;transition:all .15s;
+}
+.pdf-drop:hover{border-color:var(--gold);color:var(--sub);}
+.pdf-drop .drop-icon{font-size:20px;margin-bottom:6px;opacity:.5;}
+.attached-file{
+  display:flex;align-items:center;gap:8px;
+  padding:7px 10px;background:var(--bg3);
+  border-radius:var(--r4);margin-top:6px;font-size:12px;color:var(--sub);
+}
+.file-type-badge{
+  width:22px;height:22px;border-radius:3px;
+  display:flex;align-items:center;justify-content:center;
+  font-size:8px;font-weight:700;flex-shrink:0;
+}
+.ftb-pdf{background:var(--red);color:#fff;}
+.ftb-img{background:var(--blue);color:#fff;}
+.file-name{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.file-remove{font-size:14px;color:var(--muted);cursor:pointer;}
+.file-remove:hover{color:var(--red2);}
+
+/* AI session log */
+.session-log{
+  background:var(--bg1);border:1px solid var(--line);
+  border-radius:var(--r12);overflow:hidden;
+}
+.sl-header{
+  padding:10px 14px;border-bottom:1px solid var(--line);background:var(--bg2);
+  display:flex;align-items:center;gap:8px;
+}
+.sl-body{padding:12px 14px;display:flex;flex-direction:column;gap:8px;max-height:220px;overflow-y:auto;}
+.sl-msg{padding:8px 12px;border-radius:var(--r8);font-size:12px;line-height:1.5;}
+.sl-msg.ai{background:var(--bg3);color:var(--body);border-left:2px solid var(--teal2);}
+.sl-msg.user{background:#1a1808;color:var(--body);border-left:2px solid var(--gold);}
+.sl-de{font-family:var(--serif);font-style:italic;color:var(--head);}
+.sl-zh{color:var(--muted);font-size:11px;margin-top:3px;}
+.sl-highlight{color:var(--gold2);}
+
+/* color picker */
+.color-control{
+  background:var(--bg2);border:1px solid var(--line);
+  border-radius:var(--r12);padding:14px 16px;
+}
+.color-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px;}
+.color-row{display:flex;flex-direction:column;gap:4px;}
+.color-label{font-size:10px;color:var(--muted);font-family:var(--mono);}
+.color-input-row{display:flex;align-items:center;gap:6px;}
+.color-swatch{
+  width:22px;height:22px;border-radius:4px;flex-shrink:0;
+  border:1px solid var(--line2);cursor:pointer;
+}
+.color-hex{
+  flex:1;background:var(--bg1);border:1px solid var(--line2);
+  border-radius:4px;padding:3px 7px;font-family:var(--mono);font-size:11px;
+  color:var(--body);outline:none;
+}
+.color-hex:focus{border-color:var(--gold);}
+.preset-themes{display:flex;gap:5px;margin-top:10px;flex-wrap:wrap;}
+.theme-dot{
+  width:20px;height:20px;border-radius:50%;cursor:pointer;
+  border:2px solid transparent;transition:border-color .15s;
+}
+.theme-dot:hover,.theme-dot.active{border-color:var(--white);}
+
+/* API config */
+.api-config{
+  background:var(--bg2);border:1px solid var(--line);
+  border-radius:var(--r12);padding:14px 16px;margin-top:10px;
+}
+.api-row{margin-bottom:10px;}
+.api-label{font-size:10px;color:var(--muted);font-family:var(--mono);letter-spacing:.8px;text-transform:uppercase;margin-bottom:5px;}
+.api-input{
+  width:100%;background:var(--bg1);border:1px solid var(--line2);
+  border-radius:var(--r4);padding:7px 10px;
+  font-family:var(--mono);font-size:11px;color:var(--body);outline:none;
+  transition:border-color .15s;
+}
+.api-input:focus{border-color:var(--gold);}
+.api-select{
+  width:100%;background:var(--bg1);border:1px solid var(--line2);
+  border-radius:var(--r4);padding:7px 10px;
+  font-family:var(--sans);font-size:12px;color:var(--body);outline:none;
+}
+.api-select option{background:var(--bg1);}
+.api-status{
+  display:flex;align-items:center;gap:6px;
+  padding:6px 10px;border-radius:var(--r4);
+  font-size:11px;margin-top:6px;
+}
+.api-status.ok{background:#0e2018;color:var(--teal2);border:1px solid #1a3828;}
+.api-status.err{background:#200808;color:var(--red2);border:1px solid #381010;}
+.api-status.pending{background:#1a1408;color:var(--gold);border:1px solid #2e2010;}
+
+/* ── QUIZ page ── */
+.quiz-layout{display:flex;flex-direction:column;flex:1;overflow:hidden;}
+.quiz-toolbar{
+  padding:12px 20px;border-bottom:1px solid var(--line);
+  background:var(--bg1);display:flex;align-items:center;gap:10px;flex-wrap:wrap;
+}
+.quiz-scroll{flex:1;overflow-y:auto;padding:20px 32px 60px;}
+.quiz-card{
+  background:var(--bg1);border:1px solid var(--line);
+  border-radius:var(--r12);padding:22px 24px;
+  max-width:620px;margin:0 auto;margin-bottom:16px;
+}
+.qz-meta{display:flex;align-items:center;gap:8px;margin-bottom:14px;}
+.qz-type-badge{
+  font-family:var(--mono);font-size:10px;padding:2px 7px;
+  border-radius:3px;background:#201a08;color:var(--gold);
+  border:1px solid #382808;
+}
+.qz-source-badge{
+  font-family:var(--mono);font-size:10px;padding:2px 7px;
+  border-radius:3px;background:var(--bg3);color:var(--muted);
+}
+.qz-num{font-family:var(--mono);font-size:10px;color:var(--muted);margin-left:auto;}
+.qz-question{
+  font-size:16px;color:var(--head);line-height:1.6;margin-bottom:16px;
+}
+.qz-de{font-family:var(--serif);font-size:18px;color:var(--gold2);font-style:italic;}
+.qz-options{display:flex;flex-direction:column;gap:7px;}
+.qz-opt{
+  padding:9px 14px;border-radius:var(--r8);
+  border:1px solid var(--line2);background:var(--bg2);
+  font-size:13px;color:var(--body);cursor:pointer;
+  transition:all .15s;text-align:left;font-family:var(--sans);
+}
+.qz-opt:hover{border-color:var(--gold);background:var(--bg3);}
+.qz-opt.correct{border-color:var(--teal2);background:#0e2018;color:var(--teal2);}
+.qz-opt.wrong{border-color:var(--red2);background:#200e0a;color:var(--red2);}
+.qz-explain{
+  margin-top:14px;padding:12px 14px;
+  background:var(--bg2);border-radius:var(--r8);
+  font-size:13px;color:var(--body);line-height:1.6;
+  border-left:2px solid var(--teal2);display:none;
+}
+.qz-explain.show{display:block;}
+.qz-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:14px;}
+.quiz-progress{
+  display:flex;align-items:center;gap:10px;
+  padding:12px 32px;border-top:1px solid var(--line);
+  background:var(--bg1);
+}
+.progress-bar-outer{flex:1;height:4px;background:var(--bg3);border-radius:2px;overflow:hidden;}
+.progress-bar-inner{height:100%;background:var(--teal2);border-radius:2px;transition:width .5s;}
+.progress-label{font-family:var(--mono);font-size:11px;color:var(--muted);}
+
+/* ── RECITE page ── */
+.recite-layout{display:flex;flex:1;overflow:hidden;}
+.recite-main{flex:1;overflow-y:auto;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px;}
+.recite-card{
+  width:100%;max-width:480px;
+  background:var(--bg1);border:1px solid var(--line2);
+  border-radius:var(--r16);padding:32px;text-align:center;
+  animation:fadeUp .3s both;
+}
+.recite-mode-label{font-family:var(--mono);font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--muted);margin-bottom:16px;}
+.recite-prompt{font-size:28px;color:var(--head);margin-bottom:8px;}
+.recite-prompt.de{font-family:var(--serif);font-size:36px;color:var(--white);}
+.recite-hint{font-family:var(--mono);font-size:13px;color:var(--muted);margin-bottom:20px;min-height:20px;}
+.recite-answer{
+  font-family:var(--serif);font-size:32px;color:var(--gold2);
+  margin-bottom:8px;min-height:40px;
+}
+.recite-ipa{font-family:var(--mono);font-size:12px;color:var(--muted);margin-bottom:20px;}
+.recite-actions{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;}
+.recite-side{
+  width:260px;background:var(--bg1);border-left:1px solid var(--line);
+  overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:10px;
+}
+.assoc-card{
+  background:var(--bg2);border:1px solid var(--line2);
+  border-radius:var(--r8);padding:12px;
+}
+.assoc-type{font-size:10px;color:var(--gold);font-family:var(--mono);text-transform:uppercase;letter-spacing:.8px;margin-bottom:6px;}
+.assoc-text{font-size:12px;color:var(--body);line-height:1.5;}
+.assoc-hl{color:var(--gold2);font-family:var(--serif);}
+.assoc-actions{display:flex;gap:5px;margin-top:8px;}
+.assoc-btn{
+  font-size:10px;padding:3px 8px;border-radius:3px;
+  border:1px solid var(--line2);background:transparent;
+  color:var(--muted);cursor:pointer;font-family:var(--sans);
+}
+.assoc-btn:hover{border-color:var(--gold);color:var(--gold);}
+
+/* ── RIGHT PANEL ═══════════ */
+.panel-right{
+  grid-area:right;
+  background:var(--bg1);border-left:1px solid var(--line);
+  overflow-y:auto;display:flex;flex-direction:column;
+}
+.rtabs{display:flex;border-bottom:1px solid var(--line);flex-shrink:0;overflow-x:auto;}
+.rtab{
+  flex-shrink:0;padding:10px 0;
+  text-align:center;min-width:60px;
+  font-size:11px;font-weight:500;color:var(--muted);
+  cursor:pointer;border-bottom:2px solid transparent;
+  transition:color .15s;background:none;
+  border-top:none;border-left:none;border-right:none;
+  font-family:var(--sans);
+}
+.rtab.active{color:var(--gold);border-bottom-color:var(--gold);}
+.rpane{display:none;flex:1;flex-direction:column;overflow-y:auto;}
+.rpane.active{display:flex;}
+.rp{padding:14px;}
+
+/* Prompt panel */
+.prompt-templates{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:12px;}
+.tpl-chip{
+  font-size:11px;padding:3px 9px;border-radius:20px;
+  border:1px solid var(--line2);background:var(--bg3);color:var(--sub);
+  cursor:pointer;transition:all .15s;
+}
+.tpl-chip:hover{border-color:var(--gold);color:var(--gold);}
+.tpl-chip.active{background:var(--gold);color:#1a0e00;border-color:var(--gold);}
+.prompt-textarea{
+  width:100%;min-height:180px;
+  padding:10px 12px;background:var(--bg);border:1px solid var(--line2);
+  border-radius:var(--r8);font-family:var(--mono);font-size:11px;
+  line-height:1.65;color:var(--body);resize:vertical;outline:none;
+  transition:border-color .15s;
+}
+.prompt-textarea:focus{border-color:var(--gold);}
+.var-grid{margin-top:10px;display:flex;flex-direction:column;gap:4px;}
+.var-row{
+  display:flex;align-items:flex-start;gap:7px;
+  padding:6px 8px;background:var(--bg2);
+  border-radius:var(--r8);border:1px solid var(--line);
+}
+.var-key{
+  font-family:var(--mono);font-size:9px;
+  padding:2px 5px;border-radius:3px;
+  background:#1e0c1a;color:var(--purple2);
+  border:1px solid #361828;flex-shrink:0;white-space:nowrap;
+}
+.var-val{font-size:11px;color:var(--muted);line-height:1.4;}
+.prompt-actions{display:flex;gap:7px;margin-top:10px;}
+.btn-sm{padding:5px 12px;font-size:11px;}
+
+/* profile pane */
+.pf-label{font-family:var(--mono);font-size:9px;letter-spacing:1px;text-transform:uppercase;color:var(--muted);margin-bottom:6px;}
+.pf-select,.pf-input{
+  width:100%;padding:7px 10px;
+  background:var(--bg);border:1px solid var(--line2);
+  border-radius:var(--r8);font-family:var(--sans);font-size:12px;
+  color:var(--body);outline:none;transition:border-color .15s;
+}
+.pf-select:focus,.pf-input:focus{border-color:var(--gold);}
+.pf-select option{background:var(--bg1);}
+.exam-chips{display:flex;flex-wrap:wrap;gap:5px;}
+.exam-chip{
+  font-size:11px;padding:3px 9px;border-radius:20px;
+  border:1px solid var(--line2);background:var(--bg3);color:var(--sub);
+  cursor:pointer;transition:all .15s;
+}
+.exam-chip:hover{border-color:var(--blue);color:var(--blue2);}
+.exam-chip.on{background:#141830;border-color:var(--blue);color:var(--blue2);}
+.srs-sch-bar-wrap{display:flex;align-items:flex-end;gap:3px;height:44px;margin-top:7px;}
+.srs-sch-bar{
+  flex:1;background:var(--bg3);border-radius:3px 3px 0 0;
+  border:1px solid var(--line);border-bottom:none;
+}
+.srs-sch-bar.today{background:var(--gold);border-color:var(--gold2);}
+.srs-sch-bar.due{background:var(--teal);border-color:var(--teal2);}
+.srs-sch-days{display:flex;gap:3px;margin-top:3px;}
+.srs-sch-day{flex:1;text-align:center;font-family:var(--mono);font-size:9px;color:var(--muted);}
+
+/* stats */
+.stat-grid{display:grid;grid-template-columns:1fr 1fr;gap:7px;}
+.stat-card{background:var(--bg2);border:1px solid var(--line);border-radius:var(--r8);padding:10px 12px;}
+.stat-num{font-family:var(--serif);font-size:26px;color:var(--head);line-height:1;}
+.stat-label{font-size:10px;color:var(--muted);margin-top:3px;}
+.stat-card.gold .stat-num{color:var(--gold);}
+.stat-card.teal .stat-num{color:var(--teal2);}
+.stat-card.red .stat-num{color:var(--red2);}
+.stat-card.purple .stat-num{color:var(--purple2);}
+
+/* ═══════════ UTILITY ═══════════ */
+@keyframes fadeUp{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:translateY(0);}}
+@keyframes pulse{0%,100%{opacity:1;}50%{opacity:.4;}}
+@keyframes spin{to{transform:rotate(360deg);}}
+.spinner{width:14px;height:14px;border:2px solid var(--line2);border-top-color:var(--gold);border-radius:50%;animation:spin .8s linear infinite;}
+.section-sep{height:1px;background:var(--line);margin:14px 0;}
+.plabel-row{display:flex;align-items:center;justify-content:space-between;}
+.small{font-size:11px;color:var(--muted);}
+.gold-text{color:var(--gold);}
+.teal-text{color:var(--teal2);}
+.red-text{color:var(--red2);}
+</style>
+</head>
+<body>
+
+<!-- ════════ TOP NAV ════════ -->
+<header class="topnav">
+  <div class="brand">
+    <span class="brand-dot"></span>
+    Deutsch<em>AI</em>
+  </div>
+  <div class="topnav-search">
+    <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+    <input type="text" id="searchInput" placeholder="搜索词条、例句、考题…" value="Schmetterling" spellcheck="false">
+    <span style="font-family:var(--mono);font-size:10px;color:var(--muted)">⌘K</span>
+  </div>
+  <div class="topnav-right">
+    <div class="nbadge online" title="已连接网络词典">
+      <div class="dot"></div>联网
+    </div>
+    <div class="nbadge offline" id="reviewBadge">
+      <div class="dot" style="background:var(--gold)"></div>
+      复习队列 <span class="count">18</span>
+    </div>
+    <button class="btn btn-teal btn-sm" onclick="showApiModal()">⚙ API 配置</button>
+    <button class="btn btn-ghost btn-sm" id="themeBtn" onclick="toggleTheme()">◑ 主题</button>
+  </div>
+</header>
+
+<!-- ════════ SUB NAV ════════ -->
+<nav class="subnav">
+  <button class="snav-tab active" onclick="switchModule('dict',this)">
+    <span class="icon">📖</span> 词典
+  </button>
+  <button class="snav-tab" onclick="switchModule('classroom',this)">
+    <span class="icon">🎙</span> 课堂辅导
+  </button>
+  <button class="snav-tab" onclick="switchModule('quiz',this)">
+    <span class="icon">✏️</span> 练习题 <span class="badge">12</span>
+  </button>
+  <button class="snav-tab" onclick="switchModule('recite',this)">
+    <span class="icon">🧠</span> 背书
+  </button>
+  <button class="snav-tab" onclick="switchModule('plan',this)">
+    <span class="icon">📅</span> 学习计划
+  </button>
+</nav>
+
+<!-- ════════ LEFT PANEL ════════ -->
+<aside class="panel-left">
+
+  <div class="ps">
+    <div class="plabel">
+      词典来源
+      <span onclick="alert('管理词典来源')">管理</span>
+    </div>
+    <div class="src-group">
+      <div class="src-group-label">本地数据库</div>
+      <div class="src-item" onclick="toggleSrc(this)">
+        <span class="src-dot" style="background:#c85840"></span>
+        <span class="src-name">kaikki.org</span>
+        <span class="src-count">8M+</span>
+        <span class="src-badge sb-local">本地</span>
+        <div class="sw on" id="sw-kaikki"></div>
+      </div>
+      <div class="src-item" onclick="toggleSrc(this)">
+        <span class="src-dot" style="background:#4a9080"></span>
+        <span class="src-name">HanDeDict</span>
+        <span class="src-count">147k</span>
+        <span class="src-badge sb-local">本地</span>
+        <div class="sw on"></div>
+      </div>
+      <div class="src-item" onclick="toggleSrc(this)">
+        <span class="src-dot" style="background:#9868b0"></span>
+        <span class="src-name">Wiktionary DE</span>
+        <span class="src-count">全量</span>
+        <span class="src-badge sb-local">本地</span>
+        <div class="sw on"></div>
+      </div>
+      <div class="src-item" onclick="toggleSrc(this)">
+        <span class="src-dot" style="background:#d4a853"></span>
+        <span class="src-name">OpenThesaurus</span>
+        <span class="src-count">112k</span>
+        <span class="src-badge sb-local">本地</span>
+        <div class="sw"></div>
+      </div>
+    </div>
+    <div class="src-group" style="margin-top:8px">
+      <div class="src-group-label">网络来源</div>
+      <div class="src-item" onclick="toggleSrc(this)">
+        <span class="src-dot" style="background:#5070b8"></span>
+        <span class="src-name">DWDS 在线</span>
+        <span class="src-count">实时</span>
+        <span class="src-badge sb-net">网络</span>
+        <div class="sw on"></div>
+      </div>
+      <div class="src-item" onclick="toggleSrc(this)">
+        <span class="src-dot" style="background:#6080c0"></span>
+        <span class="src-name">Linguee DE-ZH</span>
+        <span class="src-count">实时</span>
+        <span class="src-badge sb-net">网络</span>
+        <div class="sw on"></div>
+      </div>
+      <div class="src-item" onclick="toggleSrc(this)">
+        <span class="src-dot" style="background:#8090b0"></span>
+        <span class="src-name">dict.cc</span>
+        <span class="src-count">实时</span>
+        <span class="src-badge sb-net">网络</span>
+        <div class="sw"></div>
+      </div>
+    </div>
+    <div class="src-group" style="margin-top:8px">
+      <div class="src-group-label">考试题库</div>
+      <div class="src-item" onclick="toggleSrc(this)">
+        <span class="src-dot" style="background:#c07830"></span>
+        <span class="src-name">DSH 历年真题</span>
+        <span class="src-count">2010-24</span>
+        <span class="src-badge sb-exam">考题</span>
+        <div class="sw on"></div>
+      </div>
+      <div class="src-item" onclick="toggleSrc(this)">
+        <span class="src-dot" style="background:#d09040"></span>
+        <span class="src-name">TestDaF 例题</span>
+        <span class="src-count">官方</span>
+        <span class="src-badge sb-exam">考题</span>
+        <div class="sw on"></div>
+      </div>
+      <div class="src-item" onclick="toggleSrc(this)">
+        <span class="src-dot" style="background:#b8a030"></span>
+        <span class="src-name">Goethe B2/C1</span>
+        <span class="src-count">题库</span>
+        <span class="src-badge sb-exam">考题</span>
+        <div class="sw"></div>
+      </div>
+    </div>
+    <div class="src-group" style="margin-top:8px">
+      <div class="src-group-label">专业词汇</div>
+      <div class="src-item" onclick="toggleSrc(this)">
+        <span class="src-dot" style="background:#507850"></span>
+        <span class="src-name">医学德语</span>
+        <span class="src-count">28k</span>
+        <span class="src-badge sb-ai">专业</span>
+        <div class="sw"></div>
+      </div>
+      <div class="src-item" onclick="toggleSrc(this)">
+        <span class="src-dot" style="background:#486888"></span>
+        <span class="src-name">法律德语</span>
+        <span class="src-count">14k</span>
+        <span class="src-badge sb-ai">专业</span>
+        <div class="sw"></div>
+      </div>
+      <div class="src-item" onclick="toggleSrc(this)">
+        <span class="src-dot" style="background:#705860"></span>
+        <span class="src-name">工程技术</span>
+        <span class="src-count">21k</span>
+        <span class="src-badge sb-ai">专业</span>
+        <div class="sw"></div>
+      </div>
+      <div class="src-item" onclick="toggleSrc(this)">
+        <span class="src-dot" style="background:#587060"></span>
+        <span class="src-name">经济商务</span>
+        <span class="src-count">12k</span>
+        <span class="src-badge sb-ai">专业</span>
+        <div class="sw"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="ps" style="padding-bottom:6px;border-bottom:none;">
+    <div class="plabel">
+      最近词条 / 复习队列
+      <span style="color:var(--red2);cursor:pointer" onclick="">今日 18 词</span>
+    </div>
+  </div>
+  <div class="word-scroll">
+    <div class="witem active">
+      <span class="witem-art art-der">der</span>
+      <span class="witem-word">Schmetterling</span>
+      <div class="srs-pips"><div class="srs-pip on"></div><div class="srs-pip on"></div><div class="srs-pip on"></div><div class="srs-pip"></div><div class="srs-pip"></div></div>
+    </div>
+    <div class="witem" onclick="selectWord(this,'Bewerbung')">
+      <span class="witem-art art-die">die</span>
+      <span class="witem-word">Bewerbung</span>
+      <span class="witem-due">到期</span>
+    </div>
+    <div class="witem" onclick="selectWord(this,'aufgeben')">
+      <span class="witem-art art-v">V</span>
+      <span class="witem-word">aufgeben</span>
+      <div class="srs-pips"><div class="srs-pip on"></div><div class="srs-pip on"></div><div class="srs-pip warn"></div><div class="srs-pip"></div><div class="srs-pip"></div></div>
+    </div>
+    <div class="witem" onclick="selectWord(this,'Möglichkeit')">
+      <span class="witem-art art-die">die</span>
+      <span class="witem-word">Möglichkeit</span>
+      <div class="srs-pips"><div class="srs-pip on"></div><div class="srs-pip on"></div><div class="srs-pip on"></div><div class="srs-pip on"></div><div class="srs-pip on"></div></div>
+    </div>
+    <div class="witem" onclick="selectWord(this,'verzweifeln')">
+      <span class="witem-art art-v">V</span>
+      <span class="witem-word">verzweifeln</span>
+      <div class="srs-pips"><div class="srs-pip on over"></div><div class="srs-pip"></div><div class="srs-pip"></div><div class="srs-pip"></div><div class="srs-pip"></div></div>
+    </div>
+    <div class="witem" onclick="selectWord(this,'Gewissen')">
+      <span class="witem-art art-das">das</span>
+      <span class="witem-word">Gewissen</span>
+      <div class="srs-pips"><div class="srs-pip on"></div><div class="srs-pip on"></div><div class="srs-pip on"></div><div class="srs-pip"></div><div class="srs-pip"></div></div>
+    </div>
+    <div class="witem" onclick="selectWord(this,'nachhaltig')">
+      <span class="witem-art art-v" style="background:#1a1228;color:#9060c0;">Adj</span>
+      <span class="witem-word">nachhaltig</span>
+      <div class="srs-pips"><div class="srs-pip on"></div><div class="srs-pip on"></div><div class="srs-pip on"></div><div class="srs-pip on"></div><div class="srs-pip"></div></div>
+    </div>
+    <div class="witem" onclick="selectWord(this,'Ergebnis')">
+      <span class="witem-art art-das">das</span>
+      <span class="witem-word">Ergebnis</span>
+      <div class="srs-pips"><div class="srs-pip on"></div><div class="srs-pip on"></div><div class="srs-pip"></div><div class="srs-pip"></div><div class="srs-pip"></div></div>
+    </div>
+    <div class="witem" onclick="selectWord(this,'Unterschied')">
+      <span class="witem-art art-der">der</span>
+      <span class="witem-word">Unterschied</span>
+      <div class="srs-pips"><div class="srs-pip on"></div><div class="srs-pip on"></div><div class="srs-pip on"></div><div class="srs-pip on"></div><div class="srs-pip"></div></div>
+    </div>
+  </div>
+
+</aside>
+
+<!-- ════════ MAIN PANEL ════════ -->
+<main class="panel-main" id="mainPanel">
+
+  <!-- ─── MODULE: 词典 ─── -->
+  <div class="mpage active" id="page-dict">
+    <div class="dict-scroll">
+      <div class="word-hero" id="wordHero">
+        <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:20px;margin-bottom:10px;">
+          <div>
+            <div class="word-bigname" id="wordBigname">Schmetterling</div>
+            <div class="word-meta-row">
+              <span class="tag tag-pos">Substantiv</span>
+              <span style="font-family:var(--serif);font-size:22px;color:var(--red2);">der</span>
+              <span class="tag tag-level">B1</span>
+              <span class="tag tag-exam">DSH</span>
+              <span class="tag tag-exam">德福</span>
+              <span class="tag tag-freq">词频 #4821</span>
+            </div>
+            <div class="word-ipa">/ ˈʃmɛtɐlɪŋ / &nbsp;·&nbsp; Pl: <em style="color:var(--sub)">die Schmetterlinge</em></div>
+            <div class="word-hero-actions">
+              <button class="btn btn-gold" onclick="playAudio()">▶ 发音</button>
+              <button class="btn btn-ghost">+ 加入复习</button>
+              <button class="btn btn-ghost" id="regenBtn" onclick="regenCard()">✦ 重新生成</button>
+              <button class="btn btn-ghost">⋯ 导出</button>
+            </div>
+          </div>
+          <div class="srs-widget">
+            <div class="srs-title">记忆强度</div>
+            <div class="srs-track">
+              <div class="srs-bar lit"></div><div class="srs-bar lit"></div><div class="srs-bar lit"></div><div class="srs-bar"></div><div class="srs-bar"></div>
+            </div>
+            <div class="srs-next">下次复习：3 天后</div>
+            <div class="srs-actions">
+              <button class="srs-btn wrong" onclick="rateWord(1)">✗ 忘了</button>
+              <button class="srs-btn blur" onclick="rateWord(2)">△ 模糊</button>
+              <button class="srs-btn right" onclick="rateWord(4)">✓ 记住</button>
+              <button class="srs-btn easy" onclick="rateWord(5)">★ 熟练</button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="hero-divider"></div>
+
+      <div class="tabs">
+        <button class="tab-btn active" onclick="switchTab('meanings',this)">✦ AI 释义</button>
+        <button class="tab-btn" onclick="switchTab('grammar',this)">变格 / 语法</button>
+        <button class="tab-btn" onclick="switchTab('exam',this)">考题出现</button>
+        <button class="tab-btn" onclick="switchTab('sources',this)">原始数据</button>
+        <button class="tab-btn" onclick="switchTab('related',this)">相关词汇</button>
+        <button class="tab-btn" onclick="switchTab('corpus',this)">语料库例句</button>
+      </div>
+
+      <!-- Tab: AI释义 -->
+      <div id="pane-meanings" class="tab-pane active">
+        <div class="card" id="llmCard">
+          <div class="card-head">
+            <span class="card-head-label">AI 整理 · kaikki · HanDeDict · DWDS · Wiktionary</span>
+            <span class="card-badge badge-ai">✦ claude-sonnet-4</span>
+            <span class="card-badge badge-src" style="margin-left:4px">prompt v3.1</span>
+            <span class="card-badge badge-net" style="margin-left:4px">已联网</span>
+          </div>
+          <div class="card-body">
+            <ul style="list-style:none">
+              <li class="meaning-row">
+                <span class="meaning-idx">1</span>
+                <div>
+                  <div class="meaning-zh">蝴蝶（昆虫）<span class="meaning-register">常用</span></div>
+                  <div class="ex-block">
+                    <div class="ex-de">Der bunte Schmetterling flattert von Blüte zu Blüte und trinkt den süßen Nektar.</div>
+                    <div class="ex-zh">那只色彩斑斓的蝴蝶从一朵花飞到另一朵花，吸吮甘甜的花蜜。</div>
+                    <div class="ex-src">kaikki.org · HanDeDict</div>
+                  </div>
+                </div>
+              </li>
+              <li class="meaning-row">
+                <span class="meaning-idx">2</span>
+                <div>
+                  <div class="meaning-zh">蝶泳（游泳姿势）<span class="meaning-register">体育</span></div>
+                  <div class="ex-block">
+                    <div class="ex-de">Sie schwimmt Schmetterling mit einer beeindruckenden Technik und gewinnt die Goldmedaille.</div>
+                    <div class="ex-zh">她用令人印象深刻的技术游蝶泳，赢得了金牌。</div>
+                    <div class="ex-src">kaikki.org · Wiktionary DE</div>
+                  </div>
+                </div>
+              </li>
+              <li class="meaning-row">
+                <span class="meaning-idx">3</span>
+                <div>
+                  <div class="meaning-zh">比喻：轻浮多变之人<span class="meaning-register">口语 / 文学</span></div>
+                  <div class="ex-block">
+                    <div class="ex-de">Er ist ein echter Schmetterling – heute hier, morgen dort.</div>
+                    <div class="ex-zh">他真是个"蝴蝶"——今天在这里，明天在那里。</div>
+                    <div class="ex-src">DWDS 在线 · Linguee</div>
+                  </div>
+                </div>
+              </li>
+            </ul>
+          </div>
+          <div class="etym-block">
+            <div class="etym-label">词源 (Etymologie)</div>
+            <div class="etym-text">
+              由 <span class="etym-hl">schmettern</span>（猛烈拍打）+ <span class="etym-hl">-ling</span>（小物/施动者后缀）构成，
+              生动描绘蝴蝶拍打翅膀的姿态。中古高地德语 <span class="etym-hl">smēterlinc</span>，
+              相当于方言 <em>Schmetter</em>（奶油）→ 民间语源说蝴蝶喜偷奶油。
+            </div>
+          </div>
+          <div class="mnem-block">
+            <div class="mnem-label">✦ 联想记忆</div>
+            <div style="display:flex;gap:6px;margin-bottom:10px;flex-wrap:wrap;">
+              <span class="mnem-type on" onclick="switchMnem(this,'sound')">谐音</span>
+              <span class="mnem-type" onclick="switchMnem(this,'root')">词根</span>
+              <span class="mnem-type" onclick="switchMnem(this,'story')">故事</span>
+              <span class="mnem-type" onclick="switchMnem(this,'image')">画面</span>
+            </div>
+            <div class="mnem-text" id="mnem-content">
+              "<span style="color:var(--gold2)">施</span>（Schm）<span style="color:var(--gold2)">美</span>特（met）<span style="color:var(--gold2)">令</span>（ling）" → <em>施展美丽令人倾倒的蝴蝶</em>。
+              想象一只蝴蝶飞过，所有人都被"施了美妙的魔令"而目瞪口呆。
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-head"><span class="card-head-label">常见复合词 &amp; 衍生词</span></div>
+          <div style="padding:14px 18px">
+            <div class="compounds-grid">
+              <div class="compound-chip">Schmetterlingsfisch</div>
+              <div class="compound-chip">Schmetterlingsblüte</div>
+              <div class="compound-chip">Schmetterlingsnetz</div>
+              <div class="compound-chip">Tagschmetterling</div>
+              <div class="compound-chip">Nachtschmetterling</div>
+              <div class="compound-chip">Schmetterlingseffekt</div>
+              <div class="compound-chip">Schmetterlingsstil</div>
+              <div class="compound-chip">Schmetterlingssammler</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tab: 变格/语法 -->
+      <div id="pane-grammar" class="tab-pane">
+        <div class="card">
+          <div class="card-head"><span class="card-head-label">格变化（Deklinationstabelle）</span><span class="card-badge badge-src">n-Deklination: nein</span></div>
+          <table class="decl-table">
+            <thead><tr><th>格 / Kasus</th><th>单数 Sg.</th><th>复数 Pl.</th></tr></thead>
+            <tbody>
+              <tr><td class="decl-case">Nominativ</td><td class="decl-hl">der Schmetterling</td><td>die Schmetterlinge</td></tr>
+              <tr><td class="decl-case">Akkusativ</td><td>den Schmetterling</td><td>die Schmetterlinge</td></tr>
+              <tr><td class="decl-case">Dativ</td><td>dem Schmetterling</td><td>den Schmetterlingen</td></tr>
+              <tr><td class="decl-case">Genitiv</td><td>des Schmetterlings</td><td>der Schmetterlinge</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="card">
+          <div class="card-head"><span class="card-head-label">变格规律说明</span><span class="card-badge badge-ai">AI 分析</span></div>
+          <div class="card-body" style="font-size:13px;line-height:1.8;">
+            <strong style="color:var(--gold)">强变格（starke Deklination）</strong>，属最常见的名词变格类型。<br>
+            · 复数加 <code style="background:var(--bg3);padding:1px 5px;border-radius:3px;font-family:var(--mono);font-size:11px">-e</code>（无变音）<br>
+            · Genitiv 单数加 <code style="background:var(--bg3);padding:1px 5px;border-radius:3px;font-family:var(--mono);font-size:11px">-s</code><br>
+            · Dativ 复数强制加 <code style="background:var(--bg3);padding:1px 5px;border-radius:3px;font-family:var(--mono);font-size:11px">-n</code>（德语通则）<br>
+            <br>
+            <span style="color:var(--muted)">⚠ 易错点：复数不加 Umlaut（变音），不是 Schmetterlänge。</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tab: 考题出现 -->
+      <div id="pane-exam" class="tab-pane">
+        <div class="card">
+          <div class="card-head">
+            <span class="card-head-label">DSH 历年真题出现记录</span>
+            <span class="card-badge badge-exam">2 次出现</span>
+          </div>
+          <div class="card-body">
+            <div class="exam-block" style="margin-bottom:12px;">
+              <div class="exam-block-label">
+                <span>DSH 2019 · 阅读理解</span>
+              </div>
+              <div class="exam-q">原文片段："Der Schmetterling gilt in vielen Kulturen als Symbol der Seele und der Auferstehung."</div>
+              <div class="exam-a">→ 考查方向：语境理解、文化词汇；题目要求写出该词在文中的象征意义。</div>
+            </div>
+            <div class="exam-block">
+              <div class="exam-block-label">
+                <span>TestDaF 2022 · 听力</span>
+              </div>
+              <div class="exam-q">听力材料涉及蝴蝶迁徙 (Wanderung) 话题，词汇 Schmetterling 出现 3 次，伴随 Raupe（毛毛虫）、Metamorphose（变态发育）。</div>
+              <div class="exam-a">→ 备考提示：B2 级生物/自然主题高频词，建议与 Insekt、Flügel、Larve 一同记忆。</div>
+            </div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-head"><span class="card-head-label">模拟练习题（AI 基于真题风格生成）</span><span class="card-badge badge-ai">✦ AI 出题</span></div>
+          <div class="card-body">
+            <div style="font-size:13px;color:var(--head);margin-bottom:10px;">
+              Welches Wort ist ein Synonym für <em style="font-family:var(--serif);color:var(--gold2)">Schmetterling</em> im literarischen Kontext?
+            </div>
+            <div style="display:flex;flex-direction:column;gap:6px;" id="examQuizOpts">
+              <button class="qz-opt" onclick="answerExamQuiz(this,false)">A. Käfer</button>
+              <button class="qz-opt" onclick="answerExamQuiz(this,true)">B. Falter</button>
+              <button class="qz-opt" onclick="answerExamQuiz(this,false)">C. Ameise</button>
+              <button class="qz-opt" onclick="answerExamQuiz(this,false)">D. Wespe</button>
+            </div>
+            <div id="examExplain" class="qz-explain">
+              <strong style="color:var(--teal2)">正确！</strong> <strong>Falter</strong> 是 Schmetterling 的诗歌/文学语体别称，同样指蝴蝶，在 Goethe、Schiller 的作品中频繁出现。DSH 阅读常考同义词辨析。
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tab: 原始数据 -->
+      <div id="pane-sources" class="tab-pane">
+        <div class="src-card">
+          <div class="src-card-head" onclick="toggleSrcCard(this)">
+            <span class="src-dot" style="background:#c85840;width:7px;height:7px;border-radius:50%;flex-shrink:0"></span>
+            <span class="src-card-name">kaikki.org — Wiktionary 结构化数据</span>
+            <span class="card-badge badge-ai" style="margin-right:6px">主要来源</span>
+            <span class="src-card-toggle">▼</span>
+          </div>
+          <div class="src-card-body open">
+<span class="c">{</span>
+  <span class="k">"word"</span><span class="c">:</span> <span class="v">"Schmetterling"</span><span class="c">,</span>
+  <span class="k">"pos"</span><span class="c">:</span> <span class="v">"noun"</span><span class="c">,</span>
+  <span class="k">"lang_code"</span><span class="c">:</span> <span class="v">"de"</span><span class="c">,</span>
+  <span class="k">"senses"</span><span class="c">: [</span>
+    <span class="c">{ </span><span class="k">"glosses"</span><span class="c">: [</span><span class="v">"butterfly (insect)"</span><span class="c">]</span> <span class="c">},</span>
+    <span class="c">{ </span><span class="k">"glosses"</span><span class="c">: [</span><span class="v">"butterfly stroke"</span><span class="c">], </span><span class="k">"tags"</span><span class="c">: [</span><span class="v">"swimming"</span><span class="c">] }</span>
+  <span class="c">],</span>
+  <span class="k">"forms"</span><span class="c">: [</span>
+    <span class="c">{ </span><span class="k">"form"</span><span class="c">:</span> <span class="v">"Schmetterlinge"</span><span class="c">, </span><span class="k">"tags"</span><span class="c">: [</span><span class="v">"plural"</span><span class="c">] }</span>
+  <span class="c">],</span>
+  <span class="k">"etymology_text"</span><span class="c">:</span> <span class="v">"schmettern + -ling; cf. MHG smēterlinc"</span><span class="c">,</span>
+  <span class="k">"sounds"</span><span class="c">: [{ </span><span class="k">"ipa"</span><span class="c">:</span> <span class="v">"/ˈʃmɛtɐlɪŋ/"</span> <span class="c">}]</span>
+<span class="c">}</span>
+          </div>
+        </div>
+        <div class="src-card">
+          <div class="src-card-head" onclick="toggleSrcCard(this)">
+            <span class="src-dot" style="background:#4a9080;width:7px;height:7px;border-radius:50%;flex-shrink:0"></span>
+            <span class="src-card-name">HanDeDict — 德中词典</span>
+            <span class="card-badge badge-src" style="margin-right:6px">中文释义</span>
+            <span class="src-card-toggle">▶</span>
+          </div>
+          <div class="src-card-body">Schmetterling {m} :: 蝴蝶 [dié]
+[体][Schwimmsport] Schmetterling {m} :: 蝶泳 [diéyǒng]</div>
+        </div>
+        <div class="src-card">
+          <div class="src-card-head" onclick="toggleSrcCard(this)">
+            <span class="src-dot" style="background:#5070b8;width:7px;height:7px;border-radius:50%;flex-shrink:0"></span>
+            <span class="src-card-name">DWDS 在线 — 德国数字词典</span>
+            <span class="card-badge badge-net" style="margin-right:6px">实时联网</span>
+            <span class="src-card-toggle">▶</span>
+          </div>
+          <div class="src-card-body">Häufigkeitsklasse: 15 (selten bis mittel)
+Schmetterling, der: Insekt mit vier meist bunt gefärbten Flügeln (Lepidoptera)
+Kollokationen: bunter ~, zarter ~, flatternder ~
+Wortfamilie: schmettern, Schmetterer</div>
+        </div>
+        <div class="src-card">
+          <div class="src-card-head" onclick="toggleSrcCard(this)">
+            <span class="src-dot" style="background:#c07830;width:7px;height:7px;border-radius:50%;flex-shrink:0"></span>
+            <span class="src-card-name">DSH 真题数据库</span>
+            <span class="card-badge badge-exam" style="margin-right:6px">考题</span>
+            <span class="src-card-toggle">▶</span>
+          </div>
+          <div class="src-card-body">DSH 2019 Text B: "Symbol der Seele" — Schmetterling (N)
+DSH 2022 Hörtext: Wanderung der Schmetterlinge (N, Gen)
+Häufigkeit in DSH-Texten: 2/100 Texte (Naturwissenschaft-Thema)</div>
+        </div>
+      </div>
+
+      <!-- Tab: 相关词汇 -->
+      <div id="pane-related" class="tab-pane">
+        <div style="margin-bottom:16px">
+          <div class="plabel">同义词 / 近义词</div>
+          <div class="related-grid">
+            <div class="rel-card"><div class="rel-de">Falter</div><div class="rel-art">der · 文学体</div><div class="rel-zh">蝴蝶（诗意用法）</div></div>
+            <div class="rel-card"><div class="rel-de">Tagfalter</div><div class="rel-art">der</div><div class="rel-zh">日间蝴蝶</div></div>
+            <div class="rel-card"><div class="rel-de">Nachtfalter</div><div class="rel-art">der</div><div class="rel-zh">夜蛾</div></div>
+            <div class="rel-card"><div class="rel-de">Lepidopter</div><div class="rel-art">das · 学术</div><div class="rel-zh">鳞翅目昆虫</div></div>
+          </div>
+        </div>
+        <div style="margin-bottom:16px">
+          <div class="plabel">语义相关词</div>
+          <div class="related-grid">
+            <div class="rel-card"><div class="rel-de">Raupe</div><div class="rel-art">die</div><div class="rel-zh">毛毛虫</div></div>
+            <div class="rel-card"><div class="rel-de">Puppe</div><div class="rel-art">die</div><div class="rel-zh">蛹；玩偶</div></div>
+            <div class="rel-card"><div class="rel-de">Metamorphose</div><div class="rel-art">die</div><div class="rel-zh">变态发育</div></div>
+            <div class="rel-card"><div class="rel-de">Flügel</div><div class="rel-art">der</div><div class="rel-zh">翅膀</div></div>
+          </div>
+        </div>
+        <div>
+          <div class="plabel">OpenThesaurus 同义词组</div>
+          <div class="compounds-grid">
+            <div class="compound-chip">Falter</div>
+            <div class="compound-chip">Tagschmetterling</div>
+            <div class="compound-chip">Schmetterling</div>
+            <div class="compound-chip">Lepidoptera</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tab: 语料库例句 -->
+      <div id="pane-corpus" class="tab-pane">
+        <div class="corpus-ex">
+          <div class="corpus-de">Im Schwarzwald flattern im Sommer viele bunte Schmetterlinge über die Wiesen.</div>
+          <div class="corpus-zh">夏天，黑森林里许多色彩斑斓的蝴蝶在草地上翩翩飞舞。</div>
+          <div class="corpus-src">deu_news_2025 · 1M 语料</div>
+        </div>
+        <div class="corpus-ex">
+          <div class="corpus-de">Der Schmetterling symbolisiert in der deutschen Romantik Seele, Wandel und Vergänglichkeit.</div>
+          <div class="corpus-zh">蝴蝶在德国浪漫主义文学中象征着灵魂、变化与无常。</div>
+          <div class="corpus-src">dewiktionary · 百科语料</div>
+        </div>
+        <div class="corpus-ex">
+          <div class="corpus-de">Wissenschaftler beobachteten, wie der Schmetterling seinen Rüssel in die Blüte steckte.</div>
+          <div class="corpus-zh">科学家观察到蝴蝶将口器伸入花朵的过程。</div>
+          <div class="corpus-src">deu_news_2025</div>
+        </div>
+        <div class="corpus-ex">
+          <div class="corpus-de">Sie zog den Schmetterling vorsichtig aus dem Netz, ohne seine zarten Flügel zu beschädigen.</div>
+          <div class="corpus-zh">她小心翼翼地把蝴蝶从网里取出，没有损伤它精致的翅膀。</div>
+          <div class="corpus-src">Sentences 平行语料库</div>
+        </div>
+        <div class="corpus-ex">
+          <div class="corpus-de">Der Schmetterlingseffekt besagt, dass kleine Ursachen große Wirkungen haben können.</div>
+          <div class="corpus-zh">蝴蝶效应指的是微小的原因可能引发巨大的后果。</div>
+          <div class="corpus-src">Linguee DE-ZH · 网络实时</div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ─── MODULE: 课堂辅导 ─── -->
+  <div class="mpage" id="page-classroom">
+    <div class="classroom-layout">
+      <div class="cls-main">
+
+        <!-- Voice recorder -->
+        <div class="voice-card" style="margin-bottom:16px">
+          <div class="voice-header">
+            <div class="voice-status-dot rec" id="voiceDot"></div>
+            <span class="voice-status-label" id="voiceLabel">正在收听… 检测到德语</span>
+            <div class="voice-mode-pills">
+              <div class="voice-mode-pill active" onclick="setVoiceMode(this)">实时翻译</div>
+              <div class="voice-mode-pill" onclick="setVoiceMode(this)">语法纠错</div>
+              <div class="voice-mode-pill" onclick="setVoiceMode(this)">词汇提取</div>
+              <div class="voice-mode-pill" onclick="setVoiceMode(this)">朗读评分</div>
+            </div>
+            <button class="btn btn-ghost btn-sm" style="margin-left:8px" onclick="toggleRecording()">⏸ 暂停</button>
+          </div>
+          <div class="voice-body">
+            <div class="waveform-container" id="waveform"></div>
+            <div class="transcript-result">
+              <div class="tr-de" id="trDe">Der Schmetterling ist ein Symbol der Verwandlung und des Neubeginns in vielen Kulturen.</div>
+              <div class="tr-zh" id="trZh">蝴蝶在许多文化中是蜕变与新生的象征。</div>
+            </div>
+            <div class="voice-controls">
+              <button class="btn btn-teal btn-sm">● 开始录音</button>
+              <button class="btn btn-ghost btn-sm">⏹ 停止</button>
+              <button class="btn btn-ghost btn-sm">💾 保存记录</button>
+              <button class="btn btn-ghost btn-sm">📋 复制文本</button>
+            </div>
+            <div class="sensitivity-row">
+              <label>识别灵敏度</label>
+              <input type="range" class="sens-slider" id="sensSlider" min="1" max="10" value="6">
+              <span class="sens-val" id="sensVal">6</span>
+              <span style="font-size:10px;color:var(--muted);margin-left:6px;">语言模型：SpeakerLM-mini</span>
+            </div>
+            <div class="voice-linked-word">
+              关联词卡：<strong>Schmetterling</strong> · 
+              <span style="color:var(--muted)">识别到相关词汇：</span>
+              <span style="color:var(--gold2);font-size:11px;">Verwandlung · Neubeginn · Kultur</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- AI session log -->
+        <div class="session-log">
+          <div class="sl-header">
+            <span style="font-size:12px;color:var(--sub);flex:1">AI 实时辅导记录</span>
+            <span class="card-badge badge-ai">✦ claude-sonnet-4</span>
+            <button class="btn btn-ghost btn-sm" style="margin-left:8px">清空</button>
+          </div>
+          <div class="sl-body" id="sessionLog">
+            <div class="sl-msg ai">
+              <div class="sl-de">识别到新词汇 <span class="sl-highlight">Verwandlung</span>（die）→ 变化、蜕变</div>
+              <div class="sl-zh">词义联想：与 Schmetterling 的变态发育主题相关，建议加入词组记忆。</div>
+            </div>
+            <div class="sl-msg user">
+              <div style="font-size:12px;color:var(--body)">什么是 Neubeginn？</div>
+            </div>
+            <div class="sl-msg ai">
+              <div class="sl-de"><span class="sl-highlight">Neubeginn</span>（der）= Neu（新）+ Beginn（开始）→ 新的开始、重新出发</div>
+              <div class="sl-zh">在 DSH 写作中常见："Der Frühling steht für Neubeginn"（春天象征新的开始）。B2 高频词汇。</div>
+            </div>
+            <div class="sl-msg ai">
+              <div class="sl-zh" style="color:var(--sub)">📌 已自动为你添加 <strong style="color:var(--teal2)">Verwandlung</strong> 和 <strong style="color:var(--teal2)">Neubeginn</strong> 到今日复习队列。</div>
+            </div>
+          </div>
+          <div style="padding:10px 14px;border-top:1px solid var(--line);display:flex;gap:8px;">
+            <input style="flex:1;background:var(--bg);border:1px solid var(--line2);border-radius:var(--r4);padding:7px 10px;font-size:12px;color:var(--body);outline:none;" placeholder="输入问题，或等待语音触发…" id="aiInput">
+            <button class="btn btn-gold btn-sm" onclick="sendAiMsg()">发送</button>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Classroom sidebar -->
+      <div class="cls-side">
+        <div>
+          <div class="plabel">上传学习材料</div>
+          <div class="pdf-drop" onclick="triggerUpload()">
+            <div class="drop-icon">📄</div>
+            拖拽 PDF / 图片<br>
+            <span style="font-size:10px;opacity:.6">课文、教材、考题扫描件</span>
+          </div>
+          <div class="attached-file">
+            <div class="file-type-badge ftb-pdf">PDF</div>
+            <span class="file-name">Kapitel3_Natur_DSH.pdf</span>
+            <span class="file-remove" onclick="removeFile(this)">✕</span>
+          </div>
+          <div class="attached-file">
+            <div class="file-type-badge ftb-img">IMG</div>
+            <span class="file-name">Pruefung_2023_B2.jpg</span>
+            <span class="file-remove" onclick="removeFile(this)">✕</span>
+          </div>
+        </div>
+
+        <!-- Color control -->
+        <div class="color-control">
+          <div class="plabel" style="margin-bottom:8px">🎨 主题颜色</div>
+          <div class="color-grid">
+            <div class="color-row">
+              <div class="color-label">背景色</div>
+              <div class="color-input-row">
+                <div class="color-swatch" style="background:#0d0c0a" onclick="openColorPicker('--bg','#0d0c0a')"></div>
+                <input class="color-hex" id="inp-bg" value="#0d0c0a" onchange="applyColor('--bg',this.value)">
+              </div>
+            </div>
+            <div class="color-row">
+              <div class="color-label">强调色</div>
+              <div class="color-input-row">
+                <div class="color-swatch" style="background:#d4a853" id="sw-gold" onclick="openColorPicker('--gold','#d4a853')"></div>
+                <input class="color-hex" id="inp-gold" value="#d4a853" onchange="applyColor('--gold',this.value)">
+              </div>
+            </div>
+            <div class="color-row">
+              <div class="color-label">青色</div>
+              <div class="color-input-row">
+                <div class="color-swatch" style="background:#55a88e" id="sw-teal" onclick="openColorPicker('--teal2','#55a88e')"></div>
+                <input class="color-hex" id="inp-teal" value="#55a88e" onchange="applyColor('--teal2',this.value)">
+              </div>
+            </div>
+            <div class="color-row">
+              <div class="color-label">字体色</div>
+              <div class="color-input-row">
+                <div class="color-swatch" style="background:#d0c4b4" id="sw-body" onclick="openColorPicker('--body','#d0c4b4')"></div>
+                <input class="color-hex" id="inp-body" value="#d0c4b4" onchange="applyColor('--body',this.value)">
+              </div>
+            </div>
+          </div>
+          <div style="margin-top:8px;">
+            <div class="color-label" style="margin-bottom:6px;">预设主题</div>
+            <div class="preset-themes">
+              <div class="theme-dot active" style="background:#d4a853" title="暖金（默认）" onclick="applyPreset('warm')"></div>
+              <div class="theme-dot" style="background:#5070b8" title="深蓝学院" onclick="applyPreset('blue')"></div>
+              <div class="theme-dot" style="background:#4a9080" title="青森" onclick="applyPreset('teal')"></div>
+              <div class="theme-dot" style="background:#c85840" title="红砖" onclick="applyPreset('red')"></div>
+              <div class="theme-dot" style="background:#9868b0" title="紫罗兰" onclick="applyPreset('purple')"></div>
+              <div class="theme-dot" style="background:#a0a090" title="浅色纸张" onclick="applyPreset('light')"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- API config -->
+        <div class="api-config">
+          <div class="plabel">🔌 API 接口配置</div>
+          <div class="api-row">
+            <div class="api-label">API 提供商</div>
+            <select class="api-select" id="apiProvider" onchange="updateApiUI()">
+              <option value="anthropic">Anthropic (Claude)</option>
+              <option value="openai">OpenAI (GPT-4)</option>
+              <option value="gemini">Google (Gemini)</option>
+              <option value="local">本地 (Ollama / LM Studio)</option>
+              <option value="custom">自定义端点</option>
+            </select>
+          </div>
+          <div class="api-row">
+            <div class="api-label">API Key</div>
+            <input class="api-input" type="password" id="apiKey" placeholder="sk-ant-..." value="sk-ant-••••••••••">
+          </div>
+          <div class="api-row" id="apiModelRow">
+            <div class="api-label">模型</div>
+            <select class="api-select" id="apiModel">
+              <option>claude-sonnet-4-20250514</option>
+              <option>claude-opus-4-20250514</option>
+              <option>claude-haiku-4-5-20251001</option>
+            </select>
+          </div>
+          <div class="api-row" id="apiEndpointRow" style="display:none">
+            <div class="api-label">自定义端点</div>
+            <input class="api-input" id="apiEndpoint" placeholder="http://localhost:11434/v1">
+          </div>
+          <div class="api-status ok" id="apiStatus">
+            ● API 连接正常 · 响应 &lt;200ms
+          </div>
+          <div style="margin-top:8px;">
+            <div class="api-label">语音识别模型</div>
+            <select class="api-select">
+              <option>SpeakerLM-mini（本地，离线）</option>
+              <option>Whisper large-v3（本地）</option>
+              <option>OpenAI Whisper API</option>
+              <option>Google Speech-to-Text</option>
+            </select>
+          </div>
+          <div style="margin-top:8px;display:flex;gap:6px;">
+            <button class="btn btn-ghost btn-sm" style="flex:1" onclick="testApi()">测试连接</button>
+            <button class="btn btn-gold btn-sm" style="flex:1" onclick="saveApi()">保存</button>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- ─── MODULE: 练习题 ─── -->
+  <div class="mpage" id="page-quiz">
+    <div class="quiz-layout">
+      <div class="quiz-toolbar">
+        <select class="api-select" style="width:auto;padding:5px 10px;font-size:12px;">
+          <option>全部题型</option><option>填空题</option><option>选择题</option><option>翻译题</option><option>改错题</option>
+        </select>
+        <select class="api-select" style="width:auto;padding:5px 10px;font-size:12px;">
+          <option>来源：全部</option><option>来源：DSH 真题</option><option>来源：TestDaF</option><option>来源：AI 生成</option><option>来源：PDF 导入</option>
+        </select>
+        <select class="api-select" style="width:auto;padding:5px 10px;font-size:12px;">
+          <option>主题：全部</option><option>自然/环境</option><option>文化/社会</option><option>科技</option><option>法律/经济</option>
+        </select>
+        <button class="btn btn-teal btn-sm">✦ AI 出题</button>
+        <button class="btn btn-ghost btn-sm">📤 导入 PDF</button>
+        <button class="btn btn-ghost btn-sm" style="margin-left:auto">随机顺序</button>
+      </div>
+      <div class="quiz-scroll">
+        <!-- Q1 -->
+        <div class="quiz-card">
+          <div class="qz-meta">
+            <span class="qz-type-badge">选择题</span>
+            <span class="qz-source-badge">DSH 2019 真题</span>
+            <span class="qz-num">1 / 12</span>
+          </div>
+          <div class="qz-question">
+            以下哪项是 <span class="qz-de">Schmetterling</span> 在文学语体中的同义词？
+          </div>
+          <div class="qz-options" id="q1opts">
+            <button class="qz-opt" onclick="answerQ(this,'wrong','q1expl')">A. Käfer（甲虫）</button>
+            <button class="qz-opt" onclick="answerQ(this,'correct','q1expl')">B. Falter（蝴蝶·文学）✓</button>
+            <button class="qz-opt" onclick="answerQ(this,'wrong','q1expl')">C. Ameise（蚂蚁）</button>
+            <button class="qz-opt" onclick="answerQ(this,'wrong','q1expl')">D. Wespe（黄蜂）</button>
+          </div>
+          <div id="q1expl" class="qz-explain">
+            <strong style="color:var(--teal2)">正确答案：B</strong>——<strong>Falter</strong> 是 Schmetterling 的诗歌别称，在 Goethe《浮士德》等作品中常见。DSH 阅读经常出现同义词辨析。
+          </div>
+          <div class="qz-actions">
+            <button class="btn btn-ghost btn-sm">收藏</button>
+            <button class="btn btn-gold btn-sm">下一题 →</button>
+          </div>
+        </div>
+
+        <!-- Q2 -->
+        <div class="quiz-card">
+          <div class="qz-meta">
+            <span class="qz-type-badge">填空题</span>
+            <span class="qz-source-badge">AI 生成 · B2 语法</span>
+            <span class="qz-num">2 / 12</span>
+          </div>
+          <div class="qz-question">
+            请填入正确的格形式：<br>
+            <span class="qz-de">Ich beobachtete _____ bunten Schmetterling im Garten.</span><br>
+            <span style="font-size:12px;color:var(--muted)">（提示：beobachten + Akkusativ）</span>
+          </div>
+          <div class="qz-options" id="q2opts">
+            <button class="qz-opt" onclick="answerQ(this,'wrong','q2expl')">A. der</button>
+            <button class="qz-opt" onclick="answerQ(this,'correct','q2expl')">B. den ✓</button>
+            <button class="qz-opt" onclick="answerQ(this,'wrong','q2expl')">C. dem</button>
+            <button class="qz-opt" onclick="answerQ(this,'wrong','q2expl')">D. des</button>
+          </div>
+          <div id="q2expl" class="qz-explain">
+            <strong style="color:var(--teal2)">正确答案：B → den</strong>。<em>beobachten</em> 后接 Akkusativ，<em>der</em> 名词的 Akkusativ 冠词为 <strong>den</strong>。口诀：Der → Den（Akk.男性）。
+          </div>
+          <div class="qz-actions">
+            <button class="btn btn-ghost btn-sm">收藏</button>
+            <button class="btn btn-gold btn-sm">下一题 →</button>
+          </div>
+        </div>
+
+        <!-- Q3 -->
+        <div class="quiz-card">
+          <div class="qz-meta">
+            <span class="qz-type-badge">翻译题</span>
+            <span class="qz-source-badge">TestDaF 风格</span>
+            <span class="qz-num">3 / 12</span>
+          </div>
+          <div class="qz-question">
+            请将以下句子译成中文：<br>
+            <span class="qz-de">Die Metamorphose des Schmetterlings gilt als Sinnbild für persönliches Wachstum.</span>
+          </div>
+          <div style="margin-top:10px;">
+            <textarea style="width:100%;background:var(--bg);border:1px solid var(--line2);border-radius:var(--r8);padding:10px 12px;font-size:13px;color:var(--body);resize:vertical;min-height:60px;outline:none;font-family:var(--sans);" placeholder="在此输入你的翻译…"></textarea>
+          </div>
+          <div id="q3expl" class="qz-explain" style="display:block">
+            <strong style="color:var(--gold)">参考译文：</strong>蝴蝶的变态发育被视为个人成长的象征。<br>
+            <span style="font-size:12px;color:var(--muted)">关键词：Metamorphose = 变态发育/蜕变；Sinnbild = 象征；persönliches Wachstum = 个人成长。</span>
+          </div>
+          <div class="qz-actions">
+            <button class="btn btn-ghost btn-sm">✦ AI 评分</button>
+            <button class="btn btn-gold btn-sm">下一题 →</button>
+          </div>
+        </div>
+      </div>
+      <div class="quiz-progress">
+        <span class="progress-label">进度 3/12</span>
+        <div class="progress-bar-outer"><div class="progress-bar-inner" style="width:25%"></div></div>
+        <span class="progress-label" style="color:var(--teal2)">✓ 2 正确</span>
+        <span class="progress-label" style="color:var(--red2)">✗ 0 错误</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ─── MODULE: 背书 ─── -->
+  <div class="mpage" id="page-recite">
+    <div class="recite-layout">
+      <div class="recite-main">
+        <div style="display:flex;gap:8px;margin-bottom:24px;justify-content:center;flex-wrap:wrap;">
+          <span class="tpl-chip active" onclick="setReciteMode(this,'zh2de')">看中文→说德语</span>
+          <span class="tpl-chip" onclick="setReciteMode(this,'de2zh')">看德语→说中文</span>
+          <span class="tpl-chip" onclick="setReciteMode(this,'listen')">听音→写词</span>
+          <span class="tpl-chip" onclick="setReciteMode(this,'fill')">例句填空</span>
+        </div>
+        <div class="recite-card" id="reciteCard">
+          <div class="recite-mode-label">看中文，回想德语词 · 第 3 / 18 张</div>
+          <div class="recite-prompt">蝴蝶</div>
+          <div class="recite-hint" id="reciteHint">提示：S______g (der) · B1</div>
+          <div class="recite-answer" id="reciteAnswer"></div>
+          <div class="recite-ipa" id="reciteIpa"></div>
+          <div class="recite-actions">
+            <button class="btn btn-ghost" onclick="revealRecite()">揭示答案</button>
+            <button class="btn btn-ghost" onclick="nextRecite()">跳过</button>
+          </div>
+          <div id="reciteRateArea" style="display:none;margin-top:16px;">
+            <div style="font-size:12px;color:var(--muted);margin-bottom:8px;text-align:center;">你记住了吗？</div>
+            <div class="recite-actions">
+              <button class="btn btn-danger btn-sm" onclick="rateRecite(1)">✗ 没记住</button>
+              <button class="btn btn-ghost btn-sm" onclick="rateRecite(2)">△ 模糊</button>
+              <button class="btn btn-teal btn-sm" onclick="rateRecite(4)">✓ 记住了</button>
+              <button class="btn btn-gold btn-sm" onclick="rateRecite(5)">★ 很熟</button>
+            </div>
+          </div>
+        </div>
+        <div style="display:flex;gap:16px;justify-content:center;margin-top:20px;font-family:var(--mono);font-size:11px;color:var(--muted);">
+          <span>已背 <span style="color:var(--teal2)">2</span></span>
+          <span>跳过 <span style="color:var(--gold)">1</span></span>
+          <span>未记 <span style="color:var(--red2)">0</span></span>
+          <span>剩余 <span style="color:var(--body)">15</span></span>
+        </div>
+      </div>
+      <div class="recite-side">
+        <div class="plabel">联想记忆卡</div>
+        <div class="assoc-card">
+          <div class="assoc-type">谐音联想</div>
+          <div class="assoc-text">
+            "<span class="assoc-hl">施</span>（Schm）<span class="assoc-hl">美</span>特（-met）<span class="assoc-hl">令</span>（-ling）"<br>
+            → <em>施展美丽令人倾倒的蝴蝶</em>
+          </div>
+          <div class="assoc-actions">
+            <button class="assoc-btn">👍 有效</button>
+            <button class="assoc-btn">✏️ 编辑</button>
+            <button class="assoc-btn" onclick="regenAssoc()">🔄 换一个</button>
+          </div>
+        </div>
+        <div class="assoc-card">
+          <div class="assoc-type">词根拆解</div>
+          <div class="assoc-text">
+            <span class="assoc-hl">schmettern</span>（猛烈击打）+ <span class="assoc-hl">-ling</span>（小生物后缀）<br>
+            → 翅膀用力拍打的小东西
+          </div>
+          <div class="assoc-actions">
+            <button class="assoc-btn">👍 有效</button>
+            <button class="assoc-btn">✏️ 编辑</button>
+          </div>
+        </div>
+        <div class="assoc-card">
+          <div class="assoc-type">故事联想</div>
+          <div class="assoc-text">想象一只蝴蝶飞进了"施密特铃"（Schmetterling 谐音），撞响了挂在树梢的铜铃，清脆的声音传遍整片草原。
+          </div>
+          <div class="assoc-actions">
+            <button class="assoc-btn">👍 有效</button>
+            <button class="assoc-btn">🔄 重新生成</button>
+          </div>
+        </div>
+        <button class="btn btn-ghost btn-sm" style="width:100%;justify-content:center" onclick="genAssoc()">✦ AI 生成新联想（自定义风格）</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ─── MODULE: 学习计划（placeholder） ─── -->
+  <div class="mpage" id="page-plan">
+    <div style="flex:1;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:16px;color:var(--muted);padding:40px;">
+      <div style="font-size:40px;opacity:.3">📅</div>
+      <div style="font-size:14px;text-align:center;">学习计划模块开发中<br><span style="font-size:12px;">将包含：AI 制定计划 · 考前冲刺 · 薄弱点分析 · 进度看板</span></div>
+    </div>
+  </div>
+
+</main>
+
+<!-- ════════ RIGHT PANEL ════════ -->
+<aside class="panel-right">
+  <div class="rtabs">
+    <button class="rtab active" onclick="switchRTab('prompt',this)">Prompt</button>
+    <button class="rtab" onclick="switchRTab('profile',this)">档案</button>
+    <button class="rtab" onclick="switchRTab('stats',this)">统计</button>
+  </div>
+
+  <!-- PROMPT PANE -->
+  <div id="rpane-prompt" class="rpane active">
+    <div class="rp" style="overflow-y:auto;flex:1;">
+      <div class="plabel" style="margin-bottom:8px">预设模板</div>
+      <div class="prompt-templates">
+        <span class="tpl-chip active" onclick="setTpl(this,'standard')">标准</span>
+        <span class="tpl-chip" onclick="setTpl(this,'exam')">考试备考</span>
+        <span class="tpl-chip" onclick="setTpl(this,'minimal')">极简</span>
+        <span class="tpl-chip" onclick="setTpl(this,'grammar')">深度语法</span>
+        <span class="tpl-chip" onclick="setTpl(this,'domain')">专业领域</span>
+        <span class="tpl-chip" onclick="setTpl(this,'story')">故事联想</span>
+        <span class="tpl-chip" onclick="setTpl(this,'custom')">✏️ 自定义</span>
+      </div>
+
+      <div style="margin-bottom:6px;display:flex;align-items:center;justify-content:space-between;">
+        <span style="font-size:10px;color:var(--muted);font-family:var(--mono);">当前 Prompt</span>
+        <span style="font-size:10px;color:var(--teal2);cursor:pointer;" onclick="copyPrompt()">复制</span>
+      </div>
+      <textarea class="prompt-textarea" id="promptTA" spellcheck="false">你是专业德语词典助手，服务母语为中文的学习者。
+
+根据下方原始数据，输出 JSON 格式词卡：
+{
+  "meanings": [{
+    "zh": "中文释义",
+    "register": "语域标注",
+    "example_de": "德语例句",
+    "example_zh": "例句中文"
+  }],
+  "gender": "der/die/das",
+  "plural": "复数",
+  "etymology": "词源简述",
+  "mnemonic": "中文联想记忆",
+  "compounds": ["复合词×6"],
+  "exam_note": "考试注意事项"
+}
+
+{{user_level}} · {{exam_focus}}
+中文释义优先精确，例句选最常见搭配。
+如有考题出现记录，在 exam_note 注明。
+
+=== 数据来源 ===
+词条：{{lemma}}
+{{raw_sources}}
+{{exam_data}}</textarea>
+
+      <div class="plabel" style="margin:10px 0 6px;display:flex;align-items:center;justify-content:space-between;">
+        变量注入预览
+        <span style="color:var(--teal2);font-size:9px;cursor:pointer;">编辑变量</span>
+      </div>
+      <div class="var-grid">
+        <div class="var-row">
+          <span class="var-key">{{user_level}}</span>
+          <span class="var-val" id="vLevel">用户水平 B1，母语中文</span>
+        </div>
+        <div class="var-row">
+          <span class="var-key">{{exam_focus}}</span>
+          <span class="var-val" id="vExam">备考 DSH · 德福</span>
+        </div>
+        <div class="var-row">
+          <span class="var-key">{{lemma}}</span>
+          <span class="var-val">Schmetterling</span>
+        </div>
+        <div class="var-row">
+          <span class="var-key">{{raw_sources}}</span>
+          <span class="var-val" id="vSources">kaikki · HanDeDict · DWDS · Wiktionary · Linguee</span>
+        </div>
+        <div class="var-row">
+          <span class="var-key">{{exam_data}}</span>
+          <span class="var-val" id="vExamData">DSH 2019 · TestDaF 2022 匹配</span>
+        </div>
+      </div>
+
+      <div class="prompt-actions">
+        <button class="btn btn-gold btn-sm" onclick="regenCard()">▶ 生成</button>
+        <button class="btn btn-ghost btn-sm" onclick="savePrompt()">保存</button>
+        <button class="btn btn-ghost btn-sm" onclick="exportPrompts()">导出全部</button>
+      </div>
+
+      <div class="section-sep"></div>
+      <div class="plabel" style="margin-bottom:8px">模型参数</div>
+      <div style="display:flex;flex-direction:column;gap:6px;">
+        <div class="var-row" style="flex-direction:column;align-items:flex-start;gap:4px;">
+          <span style="font-size:10px;color:var(--muted);">Temperature</span>
+          <div style="display:flex;align-items:center;gap:8px;width:100%;">
+            <input type="range" min="0" max="100" value="30" style="flex:1;accent-color:var(--teal2);" id="tempSlider" oninput="document.getElementById('tempVal').textContent=(this.value/100).toFixed(2)">
+            <span style="font-family:var(--mono);font-size:11px;color:var(--teal2);min-width:30px;" id="tempVal">0.30</span>
+          </div>
+        </div>
+        <div class="var-row" style="flex-direction:column;align-items:flex-start;gap:4px;">
+          <span style="font-size:10px;color:var(--muted);">Max Tokens</span>
+          <div style="display:flex;align-items:center;gap:8px;width:100%;">
+            <input type="range" min="256" max="4096" step="256" value="1024" style="flex:1;accent-color:var(--gold);" id="tokenSlider" oninput="document.getElementById('tokenVal').textContent=this.value">
+            <span style="font-family:var(--mono);font-size:11px;color:var(--gold);min-width:36px;" id="tokenVal">1024</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- PROFILE PANE -->
+  <div id="rpane-profile" class="rpane">
+    <div class="rp" style="overflow-y:auto;flex:1;">
+      <div style="margin-bottom:12px">
+        <div class="pf-label">德语水平</div>
+        <select class="pf-select" id="pfLevel" onchange="updateVars()">
+          <option>A1</option><option>A2</option><option selected>B1</option>
+          <option>B2</option><option>C1</option><option>C2</option>
+        </select>
+      </div>
+      <div style="margin-bottom:12px">
+        <div class="pf-label">母语</div>
+        <select class="pf-select">
+          <option selected>中文（普通话）</option>
+          <option>中文（粤语）</option>
+          <option>英文</option>
+          <option>日文</option>
+        </select>
+      </div>
+      <div style="margin-bottom:12px">
+        <div class="pf-label">学习目标</div>
+        <input class="pf-input" type="text" value="通过德福考试，赴德留学" id="pfGoal">
+      </div>
+      <div style="margin-bottom:12px">
+        <div class="pf-label">考试标签</div>
+        <div class="exam-chips">
+          <span class="exam-chip on" onclick="this.classList.toggle('on')">德福</span>
+          <span class="exam-chip on" onclick="this.classList.toggle('on')">DSH</span>
+          <span class="exam-chip" onclick="this.classList.toggle('on')">Goethe B2</span>
+          <span class="exam-chip" onclick="this.classList.toggle('on')">TestDaF</span>
+          <span class="exam-chip" onclick="this.classList.toggle('on')">工作德语</span>
+          <span class="exam-chip" onclick="this.classList.toggle('on')">医学德语</span>
+        </div>
+      </div>
+      <div style="margin-bottom:12px">
+        <div class="pf-label">专业领域</div>
+        <div class="exam-chips">
+          <span class="exam-chip" onclick="this.classList.toggle('on')">理工科</span>
+          <span class="exam-chip on" onclick="this.classList.toggle('on')">人文社科</span>
+          <span class="exam-chip" onclick="this.classList.toggle('on')">医学</span>
+          <span class="exam-chip" onclick="this.classList.toggle('on')">法律</span>
+          <span class="exam-chip" onclick="this.classList.toggle('on')">经济</span>
+        </div>
+      </div>
+      <div class="section-sep"></div>
+      <div style="margin-bottom:12px">
+        <div class="pf-label">SRS 算法</div>
+        <select class="pf-select">
+          <option selected>SM-2（经典 Anki）</option>
+          <option>FSRS-5（新算法）</option>
+          <option>简单间隔</option>
+        </select>
+      </div>
+      <div style="margin-bottom:12px">
+        <div class="pf-label">每日目标</div>
+        <select class="pf-select">
+          <option>10 词/天</option>
+          <option selected>20 词/天</option>
+          <option>30 词/天</option>
+          <option>50 词/天</option>
+        </select>
+      </div>
+      <div>
+        <div class="pf-label">复习队列（未来 7 天）</div>
+        <div class="srs-sch-bar-wrap">
+          <div class="srs-sch-bar today" style="height:100%"></div>
+          <div class="srs-sch-bar due" style="height:65%"></div>
+          <div class="srs-sch-bar due" style="height:80%"></div>
+          <div class="srs-sch-bar" style="height:30%"></div>
+          <div class="srs-sch-bar due" style="height:70%"></div>
+          <div class="srs-sch-bar" style="height:40%"></div>
+          <div class="srs-sch-bar" style="height:55%"></div>
+        </div>
+        <div class="srs-sch-days">
+          <div class="srs-sch-day">今</div><div class="srs-sch-day">+1</div>
+          <div class="srs-sch-day">+2</div><div class="srs-sch-day">+3</div>
+          <div class="srs-sch-day">+4</div><div class="srs-sch-day">+5</div>
+          <div class="srs-sch-day">+6</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- STATS PANE -->
+  <div id="rpane-stats" class="rpane">
+    <div class="rp">
+      <div class="stat-grid" style="margin-bottom:12px">
+        <div class="stat-card gold"><div class="stat-num">847</div><div class="stat-label">已学词汇</div></div>
+        <div class="stat-card teal"><div class="stat-num">18</div><div class="stat-label">今日待复习</div></div>
+        <div class="stat-card red"><div class="stat-num">94%</div><div class="stat-label">30天记忆率</div></div>
+        <div class="stat-card purple"><div class="stat-num">23</div><div class="stat-label">连续天数 🔥</div></div>
+      </div>
+      <div class="section-sep"></div>
+      <div class="pf-label">本周练习题</div>
+      <div style="margin-bottom:12px;display:flex;flex-direction:column;gap:5px;">
+        <div style="display:flex;align-items:center;gap:8px;">
+          <span style="font-size:11px;color:var(--sub);width:56px;">DSH 真题</span>
+          <div style="flex:1;height:6px;background:var(--bg3);border-radius:3px;overflow:hidden;"><div style="width:75%;height:100%;background:var(--orange2);border-radius:3px;"></div></div>
+          <span style="font-family:var(--mono);font-size:10px;color:var(--muted);">36/48</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px;">
+          <span style="font-size:11px;color:var(--sub);width:56px;">AI 生成</span>
+          <div style="flex:1;height:6px;background:var(--bg3);border-radius:3px;overflow:hidden;"><div style="width:40%;height:100%;background:var(--teal2);border-radius:3px;"></div></div>
+          <span style="font-family:var(--mono);font-size:10px;color:var(--muted);">24/60</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px;">
+          <span style="font-size:11px;color:var(--sub);width:56px;">背书</span>
+          <div style="flex:1;height:6px;background:var(--bg3);border-radius:3px;overflow:hidden;"><div style="width:55%;height:100%;background:var(--purple2);border-radius:3px;"></div></div>
+          <span style="font-family:var(--mono);font-size:10px;color:var(--muted);">110/200</span>
+        </div>
+      </div>
+      <div class="section-sep"></div>
+      <div class="pf-label">AI 调用统计</div>
+      <div style="display:flex;flex-direction:column;gap:5px;">
+        <div style="display:flex;justify-content:space-between;font-size:11px;">
+          <span style="color:var(--sub);">本月 API 调用</span>
+          <span style="color:var(--gold);font-family:var(--mono);">1,248 次</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;font-size:11px;">
+          <span style="color:var(--sub);">本地处理</span>
+          <span style="color:var(--teal2);font-family:var(--mono);">86%</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;font-size:11px;">
+          <span style="color:var(--sub);">语音识别时长</span>
+          <span style="color:var(--purple2);font-family:var(--mono);">3.2 小时</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;font-size:11px;">
+          <span style="color:var(--sub);">LLM 缓存命中</span>
+          <span style="color:var(--green2);font-family:var(--mono);">74%</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</aside>
+
+<script>
+// ══════ MODULE SWITCHING ══════
+function switchModule(id, btn) {
+  document.querySelectorAll('.mpage').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.snav-tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('page-' + id).classList.add('active');
+  btn.classList.add('active');
+}
+
+// ══════ DICT TABS ══════
+function switchTab(id, btn) {
+  document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('pane-' + id).classList.add('active');
+  btn.classList.add('active');
+}
+
+// ══════ RIGHT PANEL TABS ══════
+function switchRTab(id, btn) {
+  document.querySelectorAll('.rpane').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.rtab').forEach(b => b.classList.remove('active'));
+  document.getElementById('rpane-' + id).classList.add('active');
+  btn.classList.add('active');
+}
+
+// ══════ SOURCE TOGGLES ══════
+function toggleSrc(item) {
+  const sw = item.querySelector('.sw');
+  sw.classList.toggle('on');
+  updateSourceVars();
+}
+function updateSourceVars() {
+  const onSrcs = [];
+  document.querySelectorAll('.src-item').forEach(item => {
+    if (item.querySelector('.sw.on')) {
+      onSrcs.push(item.querySelector('.src-name').textContent.trim());
+    }
+  });
+  const v = document.getElementById('vSources');
+  if (v) v.textContent = onSrcs.slice(0,5).join(' · ') + (onSrcs.length > 5 ? '…' : '');
+}
+
+// ══════ SRS ══════
+function rateWord(n) {
+  const bars = document.querySelectorAll('.srs-bar');
+  bars.forEach((b, i) => {
+    b.classList.toggle('lit', i < n);
+    b.classList.toggle('lit2', i === n - 1 && n >= 4);
+  });
+  const days = [null, 1, 3, 7, 14, 30];
+  const next = document.querySelector('.srs-next');
+  if (next && days[n]) next.textContent = '下次复习：' + days[n] + ' 天后';
+}
+
+// ══════ RAW SOURCE CARDS ══════
+function toggleSrcCard(head) {
+  const body = head.nextElementSibling;
+  const tog = head.querySelector('.src-card-toggle');
+  body.classList.toggle('open');
+  tog.textContent = body.classList.contains('open') ? '▼' : '▶';
+}
+
+// ══════ REGEN ══════
+let regenState = 0;
+function regenCard() {
+  const btn = document.getElementById('regenBtn');
+  const card = document.getElementById('llmCard');
+  btn.textContent = '⟳ 生成中…';
+  btn.disabled = true;
+  card.style.opacity = '0.5';
+  setTimeout(() => {
+    btn.textContent = '✦ 重新生成';
+    btn.disabled = false;
+    card.style.opacity = '1';
+  }, 1400);
+}
+
+// ══════ PROMPT TEMPLATES ══════
+const prompts = {
+  standard: `你是专业德语词典助手，服务母语为中文的学习者。\n\n根据下方原始数据，输出 JSON 格式词卡：\n{\n  "meanings": [{\n    "zh": "中文释义",\n    "register": "语域标注",\n    "example_de": "德语例句",\n    "example_zh": "例句中文"\n  }],\n  "gender": "der/die/das",\n  "plural": "复数",\n  "etymology": "词源简述",\n  "mnemonic": "中文联想记忆",\n  "compounds": ["复合词×6"],\n  "exam_note": "考试注意事项"\n}\n\n{{user_level}} · {{exam_focus}}\n=== 数据来源 ===\n词条：{{lemma}}\n{{raw_sources}}\n{{exam_data}}`,
+  exam: `你是 DSH/TestDaF 考试辅导专家。\n\n针对词条 {{lemma}}，重点输出：\n1. 考试高频搭配与固定表达\n2. 历年考题中的出现场景\n3. 易错语法点\n4. 备考记忆建议\n\n用户水平：{{user_level}}\n备考方向：{{exam_focus}}\n数据：{{raw_sources}} · {{exam_data}}`,
+  minimal: `词条 {{lemma}}。\n\n仅输出：\n- 中文核心释义（≤10字）\n- 性（冠词）\n- 最常用例句 1 句\n- 记忆关键词 1 个\n\n数据：{{raw_sources}}`,
+  grammar: `请对德语词条 {{lemma}} 进行深度语法分析：\n\n1. 完整格变化表\n2. 变格类型判断与依据\n3. 与常见动词的搭配格\n4. 复合词构成规律\n5. 易混淆词形对比\n\n来源：{{raw_sources}}`,
+  domain: `你是 {{domain}} 领域的德语专家。\n\n分析词条 {{lemma}} 在专业语境中的：\n1. 专业释义（vs 日常义）\n2. 学科术语搭配\n3. 专业例句 2-3 句\n4. 相关专业词汇\n\n来源：{{raw_sources}}`,
+  story: `请为德语词 {{lemma}} 创作一个帮助母语中文的学习者记忆的故事：\n\n要求：\n- 故事 3-5 句，情节生动有趣\n- 嵌入词的读音、含义、性别信息\n- 涉及复数形式\n- 结尾总结记忆要点\n\n参考数据：{{raw_sources}}`
+};
+function setTpl(el, key) {
+  document.querySelectorAll('.tpl-chip').forEach(c => c.classList.remove('active'));
+  el.classList.add('active');
+  if (prompts[key]) document.getElementById('promptTA').value = prompts[key];
+}
+
+// ══════ THEME ══════
+function toggleTheme() {
+  document.body.classList.toggle('theme-light');
+}
+function applyColor(varName, val) {
+  document.documentElement.style.setProperty(varName, val);
+  const swId = 'sw-' + varName.replace('--','').replace('2','');
+  const sw = document.getElementById(swId);
+  if (sw) sw.style.background = val;
+}
+const presets = {
+  warm:   { '--gold':'#d4a853','--teal2':'#55a88e','--bg':'#0d0c0a','--body':'#d0c4b4' },
+  blue:   { '--gold':'#80a0e0','--teal2':'#5888c8','--bg':'#080c14','--body':'#c0d0e8' },
+  teal:   { '--gold':'#55c8a0','--teal2':'#40b888','--bg':'#080e0c','--body':'#b8d8cc' },
+  red:    { '--gold':'#e07050','--teal2':'#b85838','--bg':'#0e0808','--body':'#d8c0b8' },
+  purple: { '--gold':'#c090e0','--teal2':'#9860c0','--bg':'#0c080e','--body':'#ccb8d8' },
+  light:  { '--gold':'#806020','--teal2':'#307060','--bg':'#f0ece0','--body':'#302010' }
+};
+function applyPreset(name) {
+  const p = presets[name];
+  if (!p) return;
+  for (const [k, v] of Object.entries(p)) {
+    document.documentElement.style.setProperty(k, v);
+  }
+  document.querySelectorAll('.theme-dot').forEach(d => d.classList.remove('active'));
+  event.target.classList.add('active');
+  // update inputs
+  if (p['--bg']) { const el = document.getElementById('inp-bg'); if (el) el.value = p['--bg']; }
+  if (p['--gold']) { const el = document.getElementById('inp-gold'); if (el) el.value = p['--gold']; }
+  if (p['--teal2']) { const el = document.getElementById('inp-teal'); if (el) el.value = p['--teal2']; }
+}
+
+// ══════ WAVEFORM ANIMATION ══════
+const wf = document.getElementById('waveform');
+if (wf) {
+  for (let i = 0; i < 48; i++) {
+    const b = document.createElement('div');
+    b.className = 'wave-bar';
+    b.style.height = (4 + Math.random() * 28) + 'px';
+    wf.appendChild(b);
+  }
+  let frame = 0;
+  setInterval(() => {
+    frame++;
+    wf.querySelectorAll('.wave-bar').forEach((b, i) => {
+      const h = 4 + Math.abs(Math.sin((i * 0.4 + frame * 0.18))) * 28 + Math.abs(Math.sin((i * 0.2 + frame * 0.11))) * 12;
+      b.style.height = Math.round(h) + 'px';
+      b.style.opacity = 0.35 + Math.abs(Math.sin((i + frame * 0.15) * 0.6)) * 0.55;
+    });
+  }, 70);
+}
+
+// ══════ SENSITIVITY SLIDER ══════
+const sens = document.getElementById('sensSlider');
+const sensV = document.getElementById('sensVal');
+if (sens) sens.addEventListener('input', () => { sensV.textContent = sens.value; });
+
+// ══════ QUIZ ANSWERS ══════
+function answerQ(btn, result, explId) {
+  const opts = btn.closest('.qz-options') || btn.parentElement;
+  opts.querySelectorAll('.qz-opt').forEach(o => o.style.pointerEvents = 'none');
+  btn.classList.add(result === 'correct' ? 'correct' : 'wrong');
+  const expl = document.getElementById(explId);
+  if (expl) expl.classList.add('show');
+}
+function answerExamQuiz(btn, correct) {
+  document.querySelectorAll('#examQuizOpts .qz-opt').forEach(o => o.style.pointerEvents = 'none');
+  btn.classList.add(correct ? 'correct' : 'wrong');
+  document.getElementById('examExplain').classList.add('show');
+}
+
+// ══════ RECITE ══════
+function revealRecite() {
+  document.getElementById('reciteAnswer').textContent = 'Schmetterling';
+  document.getElementById('reciteIpa').textContent = '/ ˈʃmɛtɐlɪŋ / · der · Pl: Schmetterlinge';
+  document.querySelector('.recite-card .recite-actions').style.display = 'none';
+  document.getElementById('reciteRateArea').style.display = 'block';
+}
+function nextRecite() {
+  document.getElementById('reciteAnswer').textContent = '';
+  document.getElementById('reciteIpa').textContent = '';
+  document.getElementById('reciteRateArea').style.display = 'none';
+  document.querySelector('.recite-card .recite-actions').style.display = 'flex';
+}
+function rateRecite(n) { nextRecite(); }
+function setReciteMode(el) {
+  document.querySelectorAll('.tpl-chip').forEach(c => c.classList.remove('active'));
+  el.classList.add('active');
+}
+function regenAssoc() {}
+function genAssoc() {}
+
+// ══════ API CONFIG ══════
+function updateApiUI() {
+  const p = document.getElementById('apiProvider').value;
+  const customRow = document.getElementById('apiEndpointRow');
+  customRow.style.display = (p === 'custom' || p === 'local') ? 'block' : 'none';
+}
+function testApi() {
+  const s = document.getElementById('apiStatus');
+  s.className = 'api-status pending';
+  s.textContent = '◌ 测试中…';
+  setTimeout(() => {
+    s.className = 'api-status ok';
+    s.textContent = '● API 连接正常 · 响应 <200ms';
+  }, 1200);
+}
+function saveApi() {
+  const s = document.getElementById('apiStatus');
+  s.className = 'api-status ok';
+  s.textContent = '● 已保存 · 连接正常';
+}
+function showApiModal() { switchModule('classroom', document.querySelectorAll('.snav-tab')[1]); }
+
+// ══════ AI CHAT ══════
+function sendAiMsg() {
+  const input = document.getElementById('aiInput');
+  const log = document.getElementById('sessionLog');
+  if (!input.value.trim()) return;
+  const userMsg = document.createElement('div');
+  userMsg.className = 'sl-msg user';
+  userMsg.innerHTML = `<div style="font-size:12px;color:var(--body)">${input.value}</div>`;
+  log.appendChild(userMsg);
+  const aiMsg = document.createElement('div');
+  aiMsg.className = 'sl-msg ai';
+  aiMsg.innerHTML = `<div class="sl-zh" style="color:var(--muted)"><span class="spinner" style="display:inline-block;margin-right:6px;"></span>AI 正在处理…</div>`;
+  log.appendChild(aiMsg);
+  log.scrollTop = log.scrollHeight;
+  input.value = '';
+  setTimeout(() => {
+    aiMsg.innerHTML = `<div class="sl-de">正在分析您的问题…</div><div class="sl-zh">请稍候，AI 正在结合词卡数据和课程材料为您生成解答。</div>`;
+    log.scrollTop = log.scrollHeight;
+  }, 1000);
+}
+
+// ══════ MISC ══════
+function toggleRecording() {}
+function setVoiceMode(el) {
+  el.closest('.voice-mode-pills').querySelectorAll('.voice-mode-pill').forEach(p => p.classList.remove('active'));
+  el.classList.add('active');
+}
+function playAudio() {}
+function addToReview() {}
+function savePrompt() {}
+function copyPrompt() {
+  navigator.clipboard.writeText(document.getElementById('promptTA').value).catch(()=>{});
+}
+function exportPrompts() {}
+function selectWord(el, word) {
+  document.querySelectorAll('.witem').forEach(w => w.classList.remove('active'));
+  el.classList.add('active');
+  if (word) document.getElementById('wordBigname').textContent = word;
+}
+function updateVars() {
+  const level = document.getElementById('pfLevel').value;
+  const v = document.getElementById('vLevel');
+  if (v) v.textContent = '用户水平 ' + level + '，母语中文';
+}
+function triggerUpload() {}
+function removeFile(el) { el.closest('.attached-file').remove(); }
+function switchMnem(el, type) {
+  document.querySelectorAll('.mnem-type').forEach(t => t.classList.remove('on'));
+  el.classList.add('on');
+  const contents = {
+    sound: '"<span style="color:var(--gold2)">施</span>（Schm）<span style="color:var(--gold2)">美</span>特（-met）<span style="color:var(--gold2)">令</span>（-ling）" → <em>施展美丽令人倾倒的蝴蝶</em>。',
+    root: '<strong style="color:var(--gold2)">schmettern</strong>（猛击）+ <strong style="color:var(--gold2)">-ling</strong>（小生物后缀）→ 翅膀用力拍打的小东西。记住：蝴蝶=会"猛力扇翅"的小虫。',
+    story: '想象一只蝴蝶飞进了"施密特铃"（Schmetterling 谐音），撞响了挂在树梢的铜铃，清脆的声音传遍整片草原——这只蝴蝶就叫 Schmetterling。',
+    image: '画面：一只巨大的蝴蝶，翅膀上写着 <strong style="color:var(--gold2)">SCHM+MET+LING</strong> 三个块，像三节拼图合成的神奇生命。'
+  };
+  document.getElementById('mnem-content').innerHTML = contents[type] || contents.sound;
+}
+</script>
+</body>
+</html>
