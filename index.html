@@ -820,11 +820,79 @@ body.rp-hide { --rp-w: 0px; }
 .gold-text{color:var(--gold);}
 .teal-text{color:var(--teal2);}
 .red-text{color:var(--red2);}
+
+/* Mobile Responsive Adjustments */
+@media (max-width: 800px) {
+  :root {
+    --lp-w: 0px !important;
+    --rp-w: 0px !important;
+  }
+  body {
+    grid-template-columns: 0px 1fr 0px;
+  }
+  .topnav-search { display: none; }
+  .nbadge { display: none; }
+  .brand { flex: 1; }
+  
+  .panel-left, .panel-right {
+    position: fixed;
+    top: 92px; 
+    bottom: 0;
+    width: 280px !important;
+    max-width: 85vw;
+    z-index: 200;
+    box-shadow: 0 0 30px rgba(0,0,0,0.5);
+    transform: translateX(-100%);
+    transition: transform 0.3s ease;
+    border: none !important;
+  }
+  .panel-right {
+    right: 0;
+    transform: translateX(100%);
+  }
+  
+  body.lp-hide .panel-left { transform: translateX(-100%); }
+  body:not(.lp-hide) .panel-left { transform: translateX(0); }
+  
+  body.rp-hide .panel-right { transform: translateX(100%); }
+  body:not(.rp-hide) .panel-right { transform: translateX(0); }
+  
+  .panel-header-mobile {
+    display: flex !important;
+    align-items: center; justify-content: space-between;
+    padding: 10px 16px; border-bottom: 1px solid var(--line);
+    background: var(--bg2);
+  }
+}
+
+.panel-header-mobile { display: none; }
+
+.panel-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.5);
+  backdrop-filter: blur(2px);
+  z-index: 150;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  pointer-events: none;
+}
+@media (max-width: 800px) {
+  body:not(.lp-hide) .panel-overlay,
+  body:not(.rp-hide) .panel-overlay {
+    display: block;
+    opacity: 1;
+    pointer-events: auto;
+  }
+}
 </style>
 </head>
 <body>
 
-<!-- ════════ TOP NAV ════════ -->
+<!-- ════════ SIDEBAR OVERLAY ════════ -->
+<div id="sidebarOverlay" class="panel-overlay" onclick="closeAllPanels()"></div>
+
 <header class="topnav">
   <button class="tgl-btn" id="lpToggle" onclick="toggleLP()" title="收起/打开侧边栏 (⌘L)" style="margin-right:2px;">
     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -881,6 +949,10 @@ body.rp-hide { --rp-w: 0px; }
 
 <!-- ════════ LEFT PANEL ════════ -->
 <aside class="panel-left">
+  <div class="panel-header-mobile">
+    <span style="font-weight:600; color:var(--head); font-size:13px;">侧边菜单</span>
+    <button class="tgl-btn" onclick="toggleLP()" style="font-size:20px;">×</button>
+  </div>
 
   <div class="ps">
     <div class="plabel">
@@ -1771,6 +1843,10 @@ Häufigkeit in DSH-Texten: 2/100 Texte (Naturwissenschaft-Thema)</div>
 
 <!-- ════════ RIGHT PANEL ════════ -->
 <aside class="panel-right">
+  <div class="panel-header-mobile">
+    <span style="font-weight:600; color:var(--head); font-size:13px;">工具面板</span>
+    <button class="tgl-btn" onclick="toggleRP()" style="font-size:20px;">×</button>
+  </div>
   <div class="rtabs">
     <button class="rtab active" onclick="switchRTab('prompt',this)">Prompt</button>
     <button class="rtab" onclick="switchRTab('profile',this)">档案</button>
@@ -2284,6 +2360,19 @@ function toggleRP() {
   document.body.classList.toggle('rp-hide');
   document.getElementById('rpToggle').classList.toggle('active');
 }
+function closeAllPanels() {
+  if (!document.body.classList.contains('lp-hide')) toggleLP();
+  if (!document.body.classList.contains('rp-hide')) toggleRP();
+}
+
+// ══════ INITIALIZE ══════
+(function() {
+  // Mobile: start with panels hidden
+  if (window.innerWidth <= 800) {
+    document.body.classList.add('lp-hide', 'rp-hide');
+  }
+})();
+
 window.addEventListener('keydown', e => {
   if (e.metaKey || e.ctrlKey) {
     if (e.key === 'l' || e.key === 'L') { e.preventDefault(); toggleLP(); }
